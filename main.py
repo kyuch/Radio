@@ -4,24 +4,30 @@ import plistlib
 host = "cluster.n2wq.com"
 port = 7373
 login = "LZ3NY"
-frequency_pattern = r'(\d+\.\d{2})'
-callsign_pattern = r'([A-Z0-9]{3,6})'
-snr_pattern = r'([+-]\s?\d{1,2})\s+dB'
 pattern = r'(\d+\.\d{2})\s+([A-Z0-9/]+)\s+FT8\s+([+-]\s?\d{1,2})\s+dB'
+cty_file = "cty.plist"
 
+
+def search_list(call_sign, cty_list):
+    while len(call_sign) >= 1 and call_sign not in cty_list:
+        call_sign = call_sign[:-1]
+    if len(call_sign) == 0:
+        return None, None, None
+    else:
+        return cty_list[call_sign]["Continent"], cty_list[call_sign]["Country"], cty_list[call_sign]["CQZone"]
 
 
 def run():
+    with open(cty_file, 'rb') as infile:
+        cty_list = plistlib.load(infile, dict_type=dict)
+
     tn = telnetlib.Telnet(host, port)
     tn.read_until(b'login: ')
     tn.write(login.encode() + b'\n')
-    tn.write(b'SET/SKIMMER\n')
-    tn.write(b'SET/NOCW\n')
-    tn.write(b'SET/NOFT4\n')
-    tn.write(b'SET/NORTTY\n')
+    tn.write(b'SET/SKIMMER\nSET/NOCW\nSET/NOFT4\nSET/NORTTY\n')
 
     tn.read_until(b'DX')
-    for n in range(150):
+    for n in range(15):
         data = tn.read_until(b'\n').decode()
         if "FT8" in data:
             match = re.search(pattern, data)
@@ -32,6 +38,11 @@ def run():
             print(call_sign)
             print(frequency)
             print(snr)
+
+            continent, country, cq_zone = search_list(call_sign, cty_list)
+            print(continent)
+            print(country)
+            print(cq_zone)
 
 
 # Press the green button in the gutter to run the script.
