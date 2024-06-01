@@ -23,7 +23,7 @@ def search_list(call_sign, cty_list):
 
 def convert_to_csv(dictionary):
     fields = ['Call Sign', 'Continent', 'Country', 'Zone', 'Frequency', 'SNR', 'Timestamp']
-    with open('callsigns.csv', 'w') as file:
+    with open('callsigns.csv', 'w', newline='') as file:
         w = csv.DictWriter(file, fields)
         w.writeheader()
         for k in dictionary:
@@ -42,8 +42,15 @@ def run():
     tn.write(b'SET/SKIMMER\nSET/NOCW\nSET/NOFT4\nSET/NORTTY\n')
 
     tn.read_until(b'DX')
-    for n in range(1000):
-        data = tn.read_until(b'\n').decode()
+    for n in range(1500):
+        data = tn.read_until(b'\n')
+
+        try:  # I received a one-time UnicodeDecodeError when decoding -- never reoccurred. Added this preventatively.
+            data = data.decode()
+        except UnicodeDecodeError:
+            print(data)
+            continue
+
         if "FT8" in data:
             time = datetime.now().timestamp()
             match = re.search(pattern, data)
