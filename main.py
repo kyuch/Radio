@@ -1,10 +1,14 @@
-# This is a sample Python script.
+import re
 import telnetlib
+import plistlib
 host = "cluster.n2wq.com"
 port = 7373
 login = "LZ3NY"
-# Press ⌃R to execute it or replace it with your code.
-# Press Double ⇧ to search everywhere for classes, files, tool windows, actions, and settings.
+frequency_pattern = r'(\d+\.\d{2})'
+callsign_pattern = r'([A-Z0-9]{3,6})'
+snr_pattern = r'([+-]\s?\d{1,2})\s+dB'
+pattern = r'(\d+\.\d{2})\s+([A-Z0-9/]+)\s+FT8\s+([+-]\s?\d{1,2})\s+dB'
+
 
 
 def run():
@@ -16,14 +20,20 @@ def run():
     tn.write(b'SET/NOFT4\n')
     tn.write(b'SET/NORTTY\n')
 
-
+    tn.read_until(b'DX')
     for n in range(150):
         data = tn.read_until(b'\n').decode()
-        print(data)
+        if "FT8" in data:
+            match = re.search(pattern, data)
+            frequency = match.group(1) if match else None
+            call_sign = match.group(2) if match else None
+            snr = match.group(3).replace(" ", "") if match else None
+            print(data)
+            print(call_sign)
+            print(frequency)
+            print(snr)
 
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     run()
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
