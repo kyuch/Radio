@@ -1,4 +1,6 @@
 import re
+import csv
+import itertools  # for csv.DictWriter
 import telnetlib
 import plistlib
 from datetime import datetime
@@ -17,6 +19,15 @@ def search_list(call_sign, cty_list):
         return None, None, None
     else:
         return cty_list[call_sign]["Continent"], cty_list[call_sign]["Country"], cty_list[call_sign]["CQZone"]
+
+
+def convert_to_csv(dictionary):
+    fields = ['Call Sign', 'Continent', 'Country', 'Zone', 'Frequency', 'SNR', 'Timestamp']
+    with open('callsigns.csv', 'w') as file:
+        w = csv.DictWriter(file, fields)
+        w.writeheader()
+        for k in dictionary:
+            w.writerow({field: dictionary[k].get(field) or k for field in fields})
 
 
 def run():
@@ -40,20 +51,15 @@ def run():
             call_sign = match.group(2) if match else None
             snr = match.group(3).replace(" ", "") if match else None
             print(data)
-            # print(call_sign)
-            # print(frequency)
-            # print(snr)
-            # print(time)
 
-            continent, country, cq_zone = search_list(call_sign, cty_list)
-            # print(continent)
-            # print(country)
-            # print(cq_zone)
-
-            stored_signs[call_sign] = {'Continent': continent, 'Country': country, 'Zone': cq_zone, 'Frequency': frequency, 'SNR': snr, 'Timestamp': time}
-            print(stored_signs[call_sign])
+            if match:  # when there's no match, the line of data is usually not usable, so I don't store it
+                continent, country, cq_zone = search_list(call_sign, cty_list)
+                stored_signs[call_sign] = {'Continent': continent, 'Country': country, 'Zone': cq_zone,
+                                           'Frequency': frequency, 'SNR': snr, 'Timestamp': time}
+                print(stored_signs[call_sign])
 
     # print(stored_signs)
+    convert_to_csv(stored_signs)
 
 
 # Press the green button in the gutter to run the script.
