@@ -31,12 +31,10 @@ def convert_to_csv(dictionary):
 
 
 def calculate_band(freq):
-    if 1800 <= freq <= 2000:
+    if 1800 <= freq <= 2000:  # between 160 and 6, skipping 6 and 60
         band = 160
     elif 3500 <= freq <= 4000:
         band = 80
-    elif 5330 <= freq <= 5405:
-        band = 60
     elif 7000 <= freq <= 7300:
         band = 40
     elif 10100 <= freq <= 10150:
@@ -51,8 +49,6 @@ def calculate_band(freq):
         band = 12
     elif 28000 <= freq <= 29700:
         band = 10
-    elif 50000 <= freq <= 54000:
-        band = 6
     else:
         band = None
     return band
@@ -70,7 +66,7 @@ def run():
     tn.write(b'SET/SKIMMER\nSET/NOCW\nSET/NOFT4\nSET/NORTTY\n')
 
     tn.read_until(b'DX')
-    for n in range(150):
+    for n in range(1500):
         data = tn.read_until(b'\n')
 
         try:  # I received a one-time UnicodeDecodeError when decoding -- never reoccurred. Added this preventatively.
@@ -85,14 +81,15 @@ def run():
             frequency = match.group(1) if match else None
             call_sign = match.group(2) if match else None
             snr = match.group(3).replace(" ", "") if match else None
-            print(data)
+            # print(data)
 
             if match:  # when there's no match, the line of data is usually not usable, so I don't store it
                 continent, country, cq_zone = search_list(call_sign, cty_list)
                 band = calculate_band(float(frequency))
-                stored_signs[call_sign] = {'Continent': continent, 'Country': country, 'Zone': cq_zone,
-                                           'Frequency': frequency, 'Band': band, 'SNR': snr, 'Timestamp': time}
-                print(stored_signs[call_sign])
+                if band:
+                    stored_signs[call_sign] = {'Continent': continent, 'Country': country, 'Zone': cq_zone,
+                                               'Frequency': frequency, 'Band': band, 'SNR': snr, 'Timestamp': time}
+                    # print(stored_signs[call_sign])
 
     # print(stored_signs)
     convert_to_csv(stored_signs)

@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="28dd482c-a93d-49e3-b0e6-09d9777c16ac" name="Changes" comment="Implemented bugfix for decoding and fixed csv conversion">
+    <list default="true" id="28dd482c-a93d-49e3-b0e6-09d9777c16ac" name="Changes" comment="added bands">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/callsigns.csv" beforeDir="false" afterPath="$PROJECT_DIR$/callsigns.csv" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
@@ -122,7 +122,15 @@
       <option name="project" value="LOCAL" />
       <updated>1717264836641</updated>
     </task>
-    <option name="localTasksCounter" value="7" />
+    <task id="LOCAL-00007" summary="added bands">
+      <option name="closed" value="true" />
+      <created>1717297042964</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1717297042964</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -132,6 +140,7 @@
     <MESSAGE value="implemented dictionary for enhanced callsigns. also adjusted regex slightly" />
     <MESSAGE value="implemented conversion from dictionary to csv for testing purposes" />
     <MESSAGE value="Implemented bugfix for decoding and fixed csv conversion" />
-    <option name="LAST_COMMIT_MESSAGE" value="Implemented bugfix for decoding and fixed csv conversion" />
+    <MESSAGE value="added bands" />
+    <option name="LAST_COMMIT_MESSAGE" value="added bands" />
   </component>
 </project>
