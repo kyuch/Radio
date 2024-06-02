@@ -22,12 +22,40 @@ def search_list(call_sign, cty_list):
 
 
 def convert_to_csv(dictionary):
-    fields = ['Call Sign', 'Continent', 'Country', 'Zone', 'Frequency', 'SNR', 'Timestamp']
+    fields = ['Call Sign', 'Continent', 'Country', 'Zone', 'Frequency', 'Band', 'SNR', 'Timestamp']
     with open('callsigns.csv', 'w', newline='') as file:
         w = csv.DictWriter(file, fields)
         w.writeheader()
         for k in dictionary:
             w.writerow({field: dictionary[k].get(field) or k for field in fields})
+
+
+def calculate_band(freq):
+    if 1800 <= freq <= 2000:
+        band = 160
+    elif 3500 <= freq <= 4000:
+        band = 80
+    elif 5330 <= freq <= 5405:
+        band = 60
+    elif 7000 <= freq <= 7300:
+        band = 40
+    elif 10100 <= freq <= 10150:
+        band = 30
+    elif 14000 <= freq <= 14350:
+        band = 20
+    elif 18068 <= freq <= 18168:
+        band = 17
+    elif 21000 <= freq <= 21450:
+        band = 15
+    elif 24890 <= freq <= 24990:
+        band = 12
+    elif 28000 <= freq <= 29700:
+        band = 10
+    elif 50000 <= freq <= 54000:
+        band = 6
+    else:
+        band = None
+    return band
 
 
 def run():
@@ -42,7 +70,7 @@ def run():
     tn.write(b'SET/SKIMMER\nSET/NOCW\nSET/NOFT4\nSET/NORTTY\n')
 
     tn.read_until(b'DX')
-    for n in range(1500):
+    for n in range(150):
         data = tn.read_until(b'\n')
 
         try:  # I received a one-time UnicodeDecodeError when decoding -- never reoccurred. Added this preventatively.
@@ -61,8 +89,9 @@ def run():
 
             if match:  # when there's no match, the line of data is usually not usable, so I don't store it
                 continent, country, cq_zone = search_list(call_sign, cty_list)
+                band = calculate_band(float(frequency))
                 stored_signs[call_sign] = {'Continent': continent, 'Country': country, 'Zone': cq_zone,
-                                           'Frequency': frequency, 'SNR': snr, 'Timestamp': time}
+                                           'Frequency': frequency, 'Band': band, 'SNR': snr, 'Timestamp': time}
                 print(stored_signs[call_sign])
 
     # print(stored_signs)
