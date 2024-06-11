@@ -4,12 +4,14 @@ import itertools  # for csv.DictWriter
 import telnetlib
 import plistlib
 from datetime import datetime
+import pandas as pd
 
 host = "cluster.n2wq.com"
 port = 7373
 login = "LZ3NY"
 pattern = r'(\d+\.\d{2})\s+([A-Z0-9/]+)\s+FT8\s+([+-]\s?\d{1,2})'
 cty_file = "cty.plist"
+pd.options.display.float_format = '{:.0f}'.format
 
 
 def search_list(call_sign, cty_list):
@@ -55,7 +57,8 @@ def calculate_band(freq):
 
 
 def run():
-    stored_signs = {}
+    # stored_signs = {}
+    callsign_df = pd.DataFrame()
 
     with open(cty_file, 'rb') as infile:
         cty_list = plistlib.load(infile, dict_type=dict)
@@ -66,7 +69,7 @@ def run():
     tn.write(b'SET/SKIMMER\nSET/NOCW\nSET/NOFT4\nSET/NORTTY\n')
 
     tn.read_until(b'DX')
-    for n in range(1500):
+    for n in range(100):
         data = tn.read_until(b'\n')
 
         try:  # I received a one-time UnicodeDecodeError when decoding -- never reoccurred. Added this preventatively.
@@ -87,12 +90,15 @@ def run():
                 continent, country, cq_zone = search_list(call_sign, cty_list)
                 band = calculate_band(float(frequency))
                 if band:
-                    stored_signs[call_sign] = {'Continent': continent, 'Country': country, 'Zone': cq_zone,
-                                               'Frequency': frequency, 'Band': band, 'SNR': snr, 'Timestamp': time}
+                    temp_df = pd.DataFrame([{'Call Sign': call_sign, 'Continent': continent, 'Country': country, 'Zone': cq_zone,
+                                               'Frequency': frequency, 'Band': band, 'SNR': snr, 'Timestamp': time}])
+                    callsign_df = pd.concat([callsign_df,temp_df], ignore_index=True)
+                    # stored_signs[call_sign] = {'Continent': continent, 'Country': country, 'Zone': cq_zone,
+                    #                            'Frequency': frequency, 'Band': band, 'SNR': snr, 'Timestamp': time}
                     # print(stored_signs[call_sign])
 
-    # print(stored_signs)
-    convert_to_csv(stored_signs)
+    print(callsign_df)
+    # convert_to_csv(stored_signs)
 
 
 # Press the green button in the gutter to run the script.
