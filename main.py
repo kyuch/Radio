@@ -12,6 +12,8 @@ cty_file = "cty.plist"
 pd.options.display.float_format = '{:.0f}'.format
 csv_file = 'callsigns.csv'
 
+callsign_df = pd.DataFrame()
+
 
 def search_list(call_sign, cty_list):
     while len(call_sign) >= 1 and call_sign not in cty_list:
@@ -53,8 +55,7 @@ def delete_old(df):  # delete entries older than a day from the dataframe
 
 
 def run():
-
-    callsign_df = pd.DataFrame()
+    global callsign_df
 
     with open(cty_file, 'rb') as infile:
         cty_list = plistlib.load(infile, dict_type=dict)
@@ -65,8 +66,8 @@ def run():
     tn.write(b'SET/SKIMMER\nSET/NOCW\nSET/NOFT4\nSET/NORTTY\n')
 
     tn.read_until(b'DX')
+    n = 0
     while True:
-
         data = tn.read_until(b'\n')
 
         try:  # I received a one-time UnicodeDecodeError when decoding -- never reoccurred. Added this preventatively.
@@ -91,8 +92,11 @@ def run():
                                                'Frequency': frequency, 'Band': band, 'SNR': snr, 'Timestamp': time}])
                     callsign_df = pd.concat([callsign_df,temp_df], ignore_index=True)
 
-        callsign_df = delete_old(callsign_df)
-        callsign_df.to_csv(csv_file)  # writing dataframe minus old entries every iteration.
+        if n > 0 and n % 100 == 0:  # outputting data every 100 iterations -- if I do every iter, output will be slower than input
+            callsign_df = delete_old(callsign_df)
+            callsign_df.to_csv(csv_file)  # writing dataframe minus old entries every iteration.
+        print("iteration ", n)
+        n = n + 1
 
     # print(callsign_df)
 
