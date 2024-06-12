@@ -4,8 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="28dd482c-a93d-49e3-b0e6-09d9777c16ac" name="Changes" comment="skipping 6 and 60 bands. also added statement to skip callsign if frequency doesn't match band criteria">
+    <list default="true" id="28dd482c-a93d-49e3-b0e6-09d9777c16ac" name="Changes" comment="replaced dictionary with pandas DataFrame">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/callsigns.csv" beforeDir="false" afterPath="$PROJECT_DIR$/callsigns.csv" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -149,7 +150,15 @@
       <option name="project" value="LOCAL" />
       <updated>1717347724997</updated>
     </task>
-    <option name="localTasksCounter" value="9" />
+    <task id="LOCAL-00009" summary="replaced dictionary with pandas DataFrame">
+      <option name="closed" value="true" />
+      <created>1718066142425</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1718066142425</updated>
+    </task>
+    <option name="localTasksCounter" value="10" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -161,6 +170,7 @@
     <MESSAGE value="Implemented bugfix for decoding and fixed csv conversion" />
     <MESSAGE value="added bands" />
     <MESSAGE value="skipping 6 and 60 bands. also added statement to skip callsign if frequency doesn't match band criteria" />
-    <option name="LAST_COMMIT_MESSAGE" value="skipping 6 and 60 bands. also added statement to skip callsign if frequency doesn't match band criteria" />
+    <MESSAGE value="replaced dictionary with pandas DataFrame" />
+    <option name="LAST_COMMIT_MESSAGE" value="replaced dictionary with pandas DataFrame" />
   </component>
 </project>

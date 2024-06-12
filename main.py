@@ -1,9 +1,7 @@
 import re
-import csv
-import itertools  # for csv.DictWriter
 import telnetlib
 import plistlib
-from datetime import datetime
+from datetime import datetime, timedelta
 import pandas as pd
 
 host = "cluster.n2wq.com"
@@ -12,6 +10,7 @@ login = "LZ3NY"
 pattern = r'(\d+\.\d{2})\s+([A-Z0-9/]+)\s+FT8\s+([+-]\s?\d{1,2})'
 cty_file = "cty.plist"
 pd.options.display.float_format = '{:.0f}'.format
+csv_file = 'callsigns.csv'
 
 
 def search_list(call_sign, cty_list):
@@ -21,15 +20,6 @@ def search_list(call_sign, cty_list):
         return None, None, None
     else:
         return cty_list[call_sign]["Continent"], cty_list[call_sign]["Country"], cty_list[call_sign]["CQZone"]
-
-
-def convert_to_csv(dictionary):
-    fields = ['Call Sign', 'Continent', 'Country', 'Zone', 'Frequency', 'Band', 'SNR', 'Timestamp']
-    with open('callsigns.csv', 'w', newline='') as file:
-        w = csv.DictWriter(file, fields)
-        w.writeheader()
-        for k in dictionary:
-            w.writerow({field: dictionary[k].get(field) or k for field in fields})
 
 
 def calculate_band(freq):
@@ -56,8 +46,14 @@ def calculate_band(freq):
     return band
 
 
+def delete_old(df):  # delete entries older than a day from the dataframe
+    day_ago = datetime.now().timestamp() - timedelta(days=1).total_seconds()
+    df = df.drop(df[df['Timestamp'] <= day_ago].index)
+    return df
+
+
 def run():
-    # stored_signs = {}
+
     callsign_df = pd.DataFrame()
 
     with open(cty_file, 'rb') as infile:
@@ -69,7 +65,8 @@ def run():
     tn.write(b'SET/SKIMMER\nSET/NOCW\nSET/NOFT4\nSET/NORTTY\n')
 
     tn.read_until(b'DX')
-    for n in range(100):
+    while True:
+
         data = tn.read_until(b'\n')
 
         try:  # I received a one-time UnicodeDecodeError when decoding -- never reoccurred. Added this preventatively.
@@ -93,12 +90,11 @@ def run():
                     temp_df = pd.DataFrame([{'Call Sign': call_sign, 'Continent': continent, 'Country': country, 'Zone': cq_zone,
                                                'Frequency': frequency, 'Band': band, 'SNR': snr, 'Timestamp': time}])
                     callsign_df = pd.concat([callsign_df,temp_df], ignore_index=True)
-                    # stored_signs[call_sign] = {'Continent': continent, 'Country': country, 'Zone': cq_zone,
-                    #                            'Frequency': frequency, 'Band': band, 'SNR': snr, 'Timestamp': time}
-                    # print(stored_signs[call_sign])
 
-    print(callsign_df)
-    # convert_to_csv(stored_signs)
+        callsign_df = delete_old(callsign_df)
+        callsign_df.to_csv(csv_file)  # writing dataframe minus old entries every iteration.
+
+    # print(callsign_df)
 
 
 # Press the green button in the gutter to run the script.
