@@ -50,6 +50,7 @@ def calculate_band(freq):
 
 def delete_old(df):  # delete entries older than an hour from the dataframe
     day_ago = datetime.now().timestamp() - timedelta(hours=1).total_seconds()
+    print(df[df['Timestamp'] <= day_ago].index)
     df = df.drop(df[df['Timestamp'] <= day_ago].index)
     return df
 
@@ -92,11 +93,12 @@ def run():
                         [{'Call Sign': call_sign, 'Continent': continent, 'Country': country, 'Zone': cq_zone,
                           'Frequency': frequency, 'Band': band, 'SNR': snr, 'Timestamp': time}])
                     callsign_df = pd.concat([callsign_df, temp_df], ignore_index=True)
+            else: print(data)
 
         if n > 0 and n % 100 == 0:  # output data every 100 iters. if done every iter, output will be slower than input
             callsign_df = delete_old(callsign_df)
-            callsign_df.to_csv(csv_file)  # writing dataframe minus old entries every iteration.
-        print("iteration ", n)
+            callsign_df.to_csv(csv_file, index=False)  # writing dataframe minus old entries every iteration.
+            print("iteration ", n)
         n = n + 1
 
     # print(callsign_df)
