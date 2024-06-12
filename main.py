@@ -48,8 +48,8 @@ def calculate_band(freq):
     return band
 
 
-def delete_old(df):  # delete entries older than a day from the dataframe
-    day_ago = datetime.now().timestamp() - timedelta(days=1).total_seconds()
+def delete_old(df):  # delete entries older than an hour from the dataframe
+    day_ago = datetime.now().timestamp() - timedelta(hours=1).total_seconds()
     df = df.drop(df[df['Timestamp'] <= day_ago].index)
     return df
 

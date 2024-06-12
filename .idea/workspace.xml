@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="28dd482c-a93d-49e3-b0e6-09d9777c16ac" name="Changes" comment="made dataframe global and made writing to csv occur every 100 iterations to prevent write lagging behind read">
+    <list default="true" id="28dd482c-a93d-49e3-b0e6-09d9777c16ac" name="Changes" comment="small tweaks">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/callsigns.csv" beforeDir="false" afterPath="$PROJECT_DIR$/callsigns.csv" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
@@ -182,7 +182,15 @@
       <option name="project" value="LOCAL" />
       <updated>1718163251848</updated>
     </task>
-    <option name="localTasksCounter" value="13" />
+    <task id="LOCAL-00013" summary="small tweaks">
+      <option name="closed" value="true" />
+      <created>1718163948758</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1718163948758</updated>
+    </task>
+    <option name="localTasksCounter" value="14" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -197,6 +205,7 @@
     <MESSAGE value="replaced dictionary with pandas DataFrame" />
     <MESSAGE value="script now runs infinitely. writes all enhanced data to csv file, deletes data older than a day. using DataFrame to store data" />
     <MESSAGE value="made dataframe global and made writing to csv occur every 100 iterations to prevent write lagging behind read" />
-    <option name="LAST_COMMIT_MESSAGE" value="made dataframe global and made writing to csv occur every 100 iterations to prevent write lagging behind read" />
+    <MESSAGE value="small tweaks" />
+    <option name="LAST_COMMIT_MESSAGE" value="small tweaks" />
   </component>
 </project>
