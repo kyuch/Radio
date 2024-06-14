@@ -3,16 +3,33 @@ import telnetlib
 import plistlib
 from datetime import datetime, timedelta
 import pandas as pd
+import argparse
 
-host = "cluster.n2wq.com"
-port = 7373
-login = "LZ3NY"
+# host = "cluster.n2wq.com"
+# port = 7373
+# login = "LZ3NY"
 pattern = r'(\d+\.\d{2})\s+([A-Z0-9/]+)\s+FT8\s+([+-]\s?\d{1,2})'
 cty_file = "cty.plist"
 pd.options.display.float_format = '{:.0f}'.format
 csv_file = 'callsigns.csv'
 
 callsign_df = pd.DataFrame()
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-a", "--address",
+                    help="Specify Telnet hostname/address. Default = cluster.n2wq.com", default="cluster.n2wq.com")
+parser.add_argument("-p", "--port", help="Specify Telnet port. Default = 7373", type=int, default=7373)
+parser.add_argument("-l", "--login", help="Specify login for cluster. Default = LZ3NY", default="LZ3NY")
+parser.add_argument("-s", "--spotter",
+                    help="Specify spotter name to track. Default = VE3EID", default="VE3EID")
+parser.add_argument("-r", "--range", type=int, default=1,
+                    help="Specify # of hours to store data before dropping. Default = 1")
+args = parser.parse_args()
+host = args.address
+port = args.port
+login = args.login
+spotter = args.spotter
+age = args.range
 
 
 def search_list(call_sign, cty_list):
@@ -49,7 +66,7 @@ def calculate_band(freq):
 
 
 def delete_old(df):  # delete entries older than an hour from the dataframe
-    day_ago = datetime.now().timestamp() - timedelta(hours=1).total_seconds()
+    day_ago = datetime.now().timestamp() - timedelta(hours=age).total_seconds()
     print(df[df['Timestamp'] <= day_ago].index)
     df = df.drop(df[df['Timestamp'] <= day_ago].index)
     return df
@@ -77,13 +94,14 @@ def run():
             print(data)
             continue
 
-        if "FT8" in data:
+        spotter_string = spotter + "-#:"
+        if "FT8" and spotter_string in data:
             time = datetime.now().timestamp()
             match = re.search(pattern, data)
             frequency = match.group(1) if match else None
             call_sign = match.group(2) if match else None
             snr = match.group(3).replace(" ", "") if match else None
-            # print(data)
+            print(data)
 
             if match:  # when there's no match, the line of data is usually not usable, so I don't store it
                 continent, country, cq_zone = search_list(call_sign, cty_list)
@@ -99,6 +117,8 @@ def run():
             callsign_df = delete_old(callsign_df)
             callsign_df.to_csv(csv_file, index=False)  # writing dataframe minus old entries every iteration.
             print("iteration ", n)
+        if n == 100000:
+            n = 100
         n = n + 1
 
     # print(callsign_df)
