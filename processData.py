@@ -5,10 +5,7 @@ from datetime import datetime, timedelta
 import pandas as pd
 import argparse
 
-# host = "cluster.n2wq.com"
-# port = 7373
-# login = "LZ3NY"
-pattern = r'(\d+\.\d{2})\s+([A-Z0-9/]+)\s+FT8\s+([+-]\s?\d{1,2})'
+pattern = r'(\d+\.\d{2})\s+([A-Z0-9/]+)\s+(?:FT8|FT4)\s+([+-]\s?\d{1,2})'
 cty_file = "cty.plist"
 pd.options.display.float_format = '{:.0f}'.format
 csv_file = 'callsigns.csv'
@@ -81,9 +78,10 @@ def run():
     tn = telnetlib.Telnet(host, port)
     tn.read_until(b'login: ')
     tn.write(login.encode() + b'\n')
-    tn.write(b'SET/SKIMMER\nSET/NOCW\nSET/NOFT4\nSET/NORTTY\n')
+    tn.write(b'SET/SKIMMER\nSET/NOCW\nSET/NORTTY\n')
 
-    tn.read_until(b'DX')
+    data = tn.read_until(b'DX')
+    tn.write(b'SET/FT4\nSET/FT8\n')
     n = 0
     while True:
         data = tn.read_until(b'\n')
@@ -95,15 +93,17 @@ def run():
             continue
 
         spotter_string = spotter + "-#:"
-        if "FT8" and spotter_string in data:
+        if ("FT8" or "FT4") and spotter_string in data:
+            print(data)
             time = datetime.now().timestamp()
             match = re.search(pattern, data)
             frequency = match.group(1) if match else None
             call_sign = match.group(2) if match else None
             snr = match.group(3).replace(" ", "") if match else None
-            print(data)
+            # print(data)
 
             if match:  # when there's no match, the line of data is usually not usable, so I don't store it
+                print("went through")
                 continent, country, cq_zone = search_list(call_sign, cty_list)
                 band = calculate_band(float(frequency))
                 if band:
@@ -111,9 +111,10 @@ def run():
                         [{'Call Sign': call_sign, 'Continent': continent, 'Country': country, 'Zone': cq_zone,
                           'Frequency': frequency, 'Band': band, 'SNR': snr, 'Timestamp': time}])
                     callsign_df = pd.concat([callsign_df, temp_df], ignore_index=True)
-            else: print(data)
+            else:
+                print("didn't go through")
 
-        if n > 0 and n % 100 == 0:  # output data every 100 iters. if done every iter, output will be slower than input
+        if n > 0 and n % 100 == 0 and not callsign_df.empty:  # output data every 100 iters to prevent lagging behind
             callsign_df = delete_old(callsign_df)
             callsign_df.to_csv(csv_file, index=False)  # writing dataframe minus old entries every iteration.
             print("iteration ", n)

@@ -4,8 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="28dd482c-a93d-49e3-b0e6-09d9777c16ac" name="Changes" comment="analyzeData.py now creates a pivot table for the data in the csv that can be viewed in index.html">
+    <list default="true" id="28dd482c-a93d-49e3-b0e6-09d9777c16ac" name="Changes" comment="added arguments + argument parser to processData.py. Run program by entering &quot;python3 processData.py&quot; in command line, with &quot;-h&quot; to see the arguments. Also made it so that it only tracks one spotter at a time.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/analyzeData.py" beforeDir="false" afterPath="$PROJECT_DIR$/analyzeData.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/callsigns.csv" beforeDir="false" afterPath="$PROJECT_DIR$/callsigns.csv" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/index.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/processData.py" beforeDir="false" afterPath="$PROJECT_DIR$/processData.py" afterDir="false" />
@@ -56,7 +57,7 @@
     &quot;git-widget-placeholder&quot;: &quot;main&quot;
   }
 }</component>
-  <component name="RunManager" selected="Python.processData">
+  <component name="RunManager" selected="Python.analyzeData">
     <configuration name="analyzeData" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="Radio" />
       <option name="ENV_FILES" value="" />
@@ -93,7 +94,7 @@
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/processData.py" />
-      <option name="PARAMETERS" value="" />
+      <option name="PARAMETERS" value="-r 24" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
       <option name="MODULE_MODE" value="false" />
@@ -267,7 +268,15 @@
       <option name="project" value="LOCAL" />
       <updated>1718232301032</updated>
     </task>
-    <option name="localTasksCounter" value="19" />
+    <task id="LOCAL-00019" summary="added arguments + argument parser to processData.py. Run program by entering &quot;python3 processData.py&quot; in command line, with &quot;-h&quot; to see the arguments. Also made it so that it only tracks one spotter at a time.">
+      <option name="closed" value="true" />
+      <created>1718398156025</created>
+      <option name="number" value="00019" />
+      <option name="presentableId" value="LOCAL-00019" />
+      <option name="project" value="LOCAL" />
+      <updated>1718398156025</updated>
+    </task>
+    <option name="localTasksCounter" value="20" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -287,6 +296,7 @@
     <MESSAGE value="renamed main to processData.py and created analyzeData.py" />
     <MESSAGE value="csv to dataframe in analyzeData.py" />
     <MESSAGE value="analyzeData.py now creates a pivot table for the data in the csv that can be viewed in index.html" />
-    <option name="LAST_COMMIT_MESSAGE" value="analyzeData.py now creates a pivot table for the data in the csv that can be viewed in index.html" />
+    <MESSAGE value="added arguments + argument parser to processData.py. Run program by entering &quot;python3 processData.py&quot; in command line, with &quot;-h&quot; to see the arguments. Also made it so that it only tracks one spotter at a time." />
+    <option name="LAST_COMMIT_MESSAGE" value="added arguments + argument parser to processData.py. Run program by entering &quot;python3 processData.py&quot; in command line, with &quot;-h&quot; to see the arguments. Also made it so that it only tracks one spotter at a time." />
   </component>
 </project>
