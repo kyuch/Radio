@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="28dd482c-a93d-49e3-b0e6-09d9777c16ac" name="Changes" comment="added arguments + argument parser to processData.py. Run program by entering &quot;python3 processData.py&quot; in command line, with &quot;-h&quot; to see the arguments. Also made it so that it only tracks one spotter at a time.">
+    <list default="true" id="28dd482c-a93d-49e3-b0e6-09d9777c16ac" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/analyzeData.py" beforeDir="false" afterPath="$PROJECT_DIR$/analyzeData.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/callsigns.csv" beforeDir="false" afterPath="$PROJECT_DIR$/callsigns.csv" afterDir="false" />
@@ -276,7 +276,15 @@
       <option name="project" value="LOCAL" />
       <updated>1718398156025</updated>
     </task>
-    <option name="localTasksCounter" value="20" />
+    <task id="LOCAL-00020" summary="added ft4 to stream. changed pivot table styling and formatting. made pivot table display count of data points rather than average, but heatmap is based off average.">
+      <option name="closed" value="true" />
+      <created>1718409698846</created>
+      <option name="number" value="00020" />
+      <option name="presentableId" value="LOCAL-00020" />
+      <option name="project" value="LOCAL" />
+      <updated>1718409698846</updated>
+    </task>
+    <option name="localTasksCounter" value="21" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -297,6 +305,7 @@
     <MESSAGE value="csv to dataframe in analyzeData.py" />
     <MESSAGE value="analyzeData.py now creates a pivot table for the data in the csv that can be viewed in index.html" />
     <MESSAGE value="added arguments + argument parser to processData.py. Run program by entering &quot;python3 processData.py&quot; in command line, with &quot;-h&quot; to see the arguments. Also made it so that it only tracks one spotter at a time." />
-    <option name="LAST_COMMIT_MESSAGE" value="added arguments + argument parser to processData.py. Run program by entering &quot;python3 processData.py&quot; in command line, with &quot;-h&quot; to see the arguments. Also made it so that it only tracks one spotter at a time." />
+    <MESSAGE value="added ft4 to stream. changed pivot table styling and formatting. made pivot table display count of data points rather than average, but heatmap is based off average." />
+    <option name="LAST_COMMIT_MESSAGE" value="added ft4 to stream. changed pivot table styling and formatting. made pivot table display count of data points rather than average, but heatmap is based off average." />
   </component>
 </project>

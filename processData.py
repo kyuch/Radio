@@ -94,7 +94,7 @@ def run():
 
         spotter_string = spotter + "-#:"
         if ("FT8" or "FT4") and spotter_string in data:
-            print(data)
+            # print(data)
             time = datetime.now().timestamp()
             match = re.search(pattern, data)
             frequency = match.group(1) if match else None
@@ -103,7 +103,7 @@ def run():
             # print(data)
 
             if match:  # when there's no match, the line of data is usually not usable, so I don't store it
-                print("went through")
+                # print("went through")
                 continent, country, cq_zone = search_list(call_sign, cty_list)
                 band = calculate_band(float(frequency))
                 if band:
@@ -112,7 +112,7 @@ def run():
                           'Frequency': frequency, 'Band': band, 'SNR': snr, 'Timestamp': time}])
                     callsign_df = pd.concat([callsign_df, temp_df], ignore_index=True)
             else:
-                print("didn't go through")
+                print(data)
 
         if n > 0 and n % 100 == 0 and not callsign_df.empty:  # output data every 100 iters to prevent lagging behind
             callsign_df = delete_old(callsign_df)
