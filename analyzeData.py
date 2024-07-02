@@ -9,6 +9,9 @@ pd.set_option('display.max_rows', None)
 pd.set_option('display.width', 2000)
 csv_file = 'callsigns.csv'
 
+sparse = 5
+busy = 10
+
 # zone_name_map = {
 #     1: 'one', 2: 'two', 3: 'three', 4: 'four', 5: 'five',
 #     6: 'six', 7: 'seven', 8: 'eight', 9: 'nine', 10: 'ten',
@@ -22,18 +25,41 @@ csv_file = 'callsigns.csv'
 #     39: 'thirty-nine', 40: 'forty'
 # }
 
-def reformat_table(table):  # returns 2 dataframes from the pivot table data. One Contesting, one WARC
+
+def reformat_table(table):
     flattened = pd.DataFrame(table.to_records())
     # flattened['Zone'] = flattened['Zone'].apply(lambda x: f"{x} {zone_name_map.get(x, '')}")
     flattened.reset_index(drop=True)
+    # flattened['Zone '] = flattened['Zone']
+    # flattened['Zone '] = flattened.loc[:, 'Zone']
     flattened1 = (flattened.reindex(
-        ['Zone', '160', '80', '40', '20', '15', '10', '6'], axis=1).dropna(how='all', axis=1))
-    flattened2 = (flattened.reindex(
-        ['Zone', '30', '17', '12'], axis=1).dropna(how='all', axis=1))
+        ['Zone', '160', '80', '40', '20', '15', '10', '6', ' ', '30', '17', '12'], axis=1))
+
+    flattened1 = flattened1.fillna({' ': ' '})
+
+    # flattened2 = (flattened.reindex(
+    #     ['Zone', '30', '17', '12'], axis=1).dropna(how='all', axis=1))
 
     print(flattened1)
-    print(flattened2)
-    return flattened1, flattened2
+    return flattened1
+
+
+def replace_values(df):
+    df = df.fillna(0)
+
+    def replace_value(x):
+        if isinstance(x, (int, float)):
+            if x == 0:
+                return ' '
+            elif x <= sparse:
+                return '◻'
+            elif sparse < x < busy:
+                return '◩'
+            elif x >= busy:
+                return '◼'
+        return x
+
+    return df.map(replace_value)
 
 
 def run():  # may make it so that function infinitely runs every hour or so
@@ -42,10 +68,10 @@ def run():  # may make it so that function infinitely runs every hour or so
     count_table = df.pivot_table(values='SNR', index=['Zone'], columns=['Band'], aggfunc='count')
     count_table = count_table.fillna(0)
     count_table = count_table.astype(int)
-    contesting_counts, warc_counts = reformat_table(count_table)
+    count_table = reformat_table(count_table)
 
     mean_table = df.pivot_table(values='SNR', index=['Zone'], columns=['Band'], aggfunc='mean')
-    contesting_means, warc_means = reformat_table(mean_table)
+    mean_table = reformat_table(mean_table)
 
     def apply_color(val):
         if pd.isna(val):
@@ -60,56 +86,39 @@ def run():  # may make it so that function infinitely runs every hour or so
             return 'background-color: #e57373'
 
     # apply color map to numeric columns only
-    contesting_means_no_zone = contesting_means.drop(columns=['Zone'])
-    color_table1 = contesting_means_no_zone.map(apply_color)
+    means_no_zone = mean_table.drop(columns=['Zone', ' '])
+    color_table1 = means_no_zone.map(apply_color)
 
-    warc_means_no_zone = warc_means.drop(columns=['Zone'])
-    color_table2 = warc_means_no_zone.map(apply_color)
-
+    # warc_means_no_zone = warc_means.drop(columns=['Zone'])
+    # color_table2 = warc_means_no_zone.map(apply_color)
+    count_table = replace_values(count_table)
     # add the 'Zone' column back without applying the color map to it
-    contesting_counts['Zone'] = contesting_means['Zone']
-    warc_counts['Zone'] = warc_means['Zone']
+    count_table['Zone'] = mean_table['Zone']
+    count_table[' '] = mean_table[' ']
+    # warc_counts['Zone'] = warc_means['Zone']
+
 
     # apply the styles to the dataframes
-    styled_table1 = contesting_counts.style.apply(lambda x: color_table1, axis=None).set_caption(
-        "Contesting Bands")
-    styled_table2 = warc_counts.style.apply(lambda x: color_table2, axis=None).set_caption(
-        "WARC Bands")
+    styled_table1 = count_table.style.apply(lambda x: color_table1, axis=None).set_caption(
+        "Band Activity Colored by Average SNR Value")
+    # styled_table2 = warc_counts.style.apply(lambda x: color_table2, axis=None).set_caption(
+    #     "WARC Bands")
 
     styled_table1.set_properties(subset=['Zone'], **{'font-weight': 'bold'})
-    styled_table2.set_properties(subset=['Zone'], **{'font-weight': 'bold'})
-    html1 = styled_table1.hide(axis="index").to_html()
-    html2 = styled_table2.hide(axis="index").to_html()
+    styled_table1.set_properties(**{'width': '30px'})
+    styled_table1.set_properties(**{'text-align': 'center'})
+    # styled_table2.set_properties(subset=['Zone'], **{'font-weight': 'bold'})
 
-    html_content = f"""
-        <html>
-        <head>
-            <style>
-                .container {{
-                    display: flex;
-                    flex-direction: row;
-                    justify-content: space-around;
-                }}
-                .table-container {{
-                    margin: 20px;
-                }}
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <div class="table-container">
-                    {html1}
-                </div>
-                <div class="table-container">
-                    {html2}
-                </div>
-            </div>
-        </body>
-        </html>
-        """
+    styled_table1.set_table_styles([
+        {'selector': 'th', 'props': [('font-size', '12pt')]},
+        {'selector': 'td', 'props': [('font-size', '12pt')]},
+    ])
+
+    html1 = styled_table1.hide(axis="index").to_html()
+    # html2 = styled_table2.hide(axis="index").to_html()
 
     with open("index.html", "w") as text_file:
-        text_file.write(html_content)
+        text_file.write(html1)
 
     # with open("warc_index.html", "w") as text_file:
     #     text_file.write(html2)
