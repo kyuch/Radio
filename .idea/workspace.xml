@@ -4,10 +4,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="28dd482c-a93d-49e3-b0e6-09d9777c16ac" name="Changes" comment="made significant changes to the displayed table. seperated into two graphs for contesting and warc, reorganized it, etc.">
+    <list default="true" id="28dd482c-a93d-49e3-b0e6-09d9777c16ac" name="Changes" comment="reformatted the html table further">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/analyzeData.py" beforeDir="false" afterPath="$PROJECT_DIR$/analyzeData.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/callsigns.csv" beforeDir="false" afterPath="$PROJECT_DIR$/callsigns_test.csv" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/processData.py" beforeDir="false" afterPath="$PROJECT_DIR$/processData.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -56,7 +58,7 @@
     &quot;git-widget-placeholder&quot;: &quot;main&quot;
   }
 }</component>
-  <component name="RunManager" selected="Python.analyzeData">
+  <component name="RunManager" selected="Python.processData">
     <configuration name="analyzeData" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="Radio" />
       <option name="ENV_FILES" value="" />
@@ -291,7 +293,15 @@
       <option name="project" value="LOCAL" />
       <updated>1719863345300</updated>
     </task>
-    <option name="localTasksCounter" value="22" />
+    <task id="LOCAL-00022" summary="reformatted the html table further">
+      <option name="closed" value="true" />
+      <created>1719936234427</created>
+      <option name="number" value="00022" />
+      <option name="presentableId" value="LOCAL-00022" />
+      <option name="project" value="LOCAL" />
+      <updated>1719936234427</updated>
+    </task>
+    <option name="localTasksCounter" value="23" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -325,6 +335,7 @@
     <MESSAGE value="added arguments + argument parser to processData.py. Run program by entering &quot;python3 processData.py&quot; in command line, with &quot;-h&quot; to see the arguments. Also made it so that it only tracks one spotter at a time." />
     <MESSAGE value="added ft4 to stream. changed pivot table styling and formatting. made pivot table display count of data points rather than average, but heatmap is based off average." />
     <MESSAGE value="made significant changes to the displayed table. seperated into two graphs for contesting and warc, reorganized it, etc." />
-    <option name="LAST_COMMIT_MESSAGE" value="made significant changes to the displayed table. seperated into two graphs for contesting and warc, reorganized it, etc." />
+    <MESSAGE value="reformatted the html table further" />
+    <option name="LAST_COMMIT_MESSAGE" value="reformatted the html table further" />
   </component>
 </project>

@@ -57,6 +57,8 @@ def calculate_band(freq):
         band = 12
     elif 28000 <= freq <= 29700:
         band = 10
+    elif 50000 <= freq <= 54000:
+        band = 6
     else:
         band = None
     return band
