@@ -1,8 +1,6 @@
+from datetime import datetime
 import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
-from matplotlib.colors import LinearSegmentedColormap
+
 
 pd.set_option('display.max_columns', None)
 pd.set_option('display.max_rows', None)
@@ -37,9 +35,6 @@ def reformat_table(table):
 
     flattened1 = flattened1.fillna({' ': ' '})
 
-    # flattened2 = (flattened.reindex(
-    #     ['Zone', '30', '17', '12'], axis=1).dropna(how='all', axis=1))
-
     print(flattened1)
     return flattened1
 
@@ -64,6 +59,8 @@ def replace_values(df):
 
 def run():  # may make it so that function infinitely runs every hour or so
     df = pd.read_csv(csv_file, keep_default_na=False)
+    spotter = df['Spotter'].iloc[0]
+    print(spotter)
     count_table = df.pivot_table(values='SNR', index=['Zone'], columns=['Band'], aggfunc='count')
     count_table = count_table.fillna(0)
     count_table = count_table.astype(int)
@@ -93,9 +90,11 @@ def run():  # may make it so that function infinitely runs every hour or so
     count_table['Zone'] = mean_table['Zone']
     count_table[' '] = mean_table[' ']
 
+    now = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    caption_string = "Current Conditions at " + spotter + " as of " + now
     # apply the styles to the dataframes
     styled_table1 = count_table.style.apply(lambda x: color_table1, axis=None).set_caption(
-        "Band Activity Colored by Average SNR Value")
+        caption_string)
 
     styled_table1.set_properties(subset=['Zone'], **{'font-weight': 'bold'})
     styled_table1.set_properties(**{'width': '30px'})

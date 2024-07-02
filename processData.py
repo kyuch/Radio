@@ -105,13 +105,12 @@ def run():
             # print(data)
 
             if match:  # when there's no match, the line of data is usually not usable, so I don't store it
-                # print("went through")
                 continent, country, cq_zone = search_list(call_sign, cty_list)
                 band = calculate_band(float(frequency))
                 if band:
                     temp_df = pd.DataFrame(
                         [{'Call Sign': call_sign, 'Continent': continent, 'Country': country, 'Zone': cq_zone,
-                          'Frequency': frequency, 'Band': band, 'SNR': snr, 'Timestamp': time}])
+                          'Frequency': frequency, 'Band': band, 'SNR': snr, 'Timestamp': time, 'Spotter': spotter}])
                     callsign_df = pd.concat([callsign_df, temp_df], ignore_index=True)
             else:
                 print(data)
@@ -123,8 +122,6 @@ def run():
         if n == 100000:
             n = 100
         n = n + 1
-
-    # print(callsign_df)
 
 
 # Press the green button in the gutter to run the script.
