@@ -19,8 +19,8 @@ parser.add_argument("-p", "--port", help="Specify Telnet port. Default = 7373", 
 parser.add_argument("-l", "--login", help="Specify login for cluster. Default = LZ3NY", default="LZ3NY")
 parser.add_argument("-s", "--spotter",
                     help="Specify spotter name to track. Default = VE3EID", default="VE3EID")
-parser.add_argument("-r", "--range", type=int, default=1,
-                    help="Specify # of hours to store data before dropping. Default = 1")
+parser.add_argument("-r", "--range", type=int, default=3,
+                    help="Specify # of hours to store data before dropping. Default = 3")
 args = parser.parse_args()
 host = args.address
 port = args.port

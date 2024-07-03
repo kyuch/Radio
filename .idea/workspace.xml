@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="28dd482c-a93d-49e3-b0e6-09d9777c16ac" name="Changes" comment="made slight adjustments. fixed 6m band">
+    <list default="true" id="28dd482c-a93d-49e3-b0e6-09d9777c16ac" name="Changes" comment="added spotter name to csv file for use in analyzeData.py. Changed table caption to list spotter name and timestamp">
       <change afterPath="$PROJECT_DIR$/callsigns_test.csv" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/analyzeData.py" beforeDir="false" afterPath="$PROJECT_DIR$/analyzeData.py" afterDir="false" />
@@ -310,7 +310,15 @@
       <option name="project" value="LOCAL" />
       <updated>1719951488103</updated>
     </task>
-    <option name="localTasksCounter" value="24" />
+    <task id="LOCAL-00024" summary="added spotter name to csv file for use in analyzeData.py. Changed table caption to list spotter name and timestamp">
+      <option name="closed" value="true" />
+      <created>1719953769127</created>
+      <option name="number" value="00024" />
+      <option name="presentableId" value="LOCAL-00024" />
+      <option name="project" value="LOCAL" />
+      <updated>1719953769127</updated>
+    </task>
+    <option name="localTasksCounter" value="25" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -346,6 +354,7 @@
     <MESSAGE value="made significant changes to the displayed table. seperated into two graphs for contesting and warc, reorganized it, etc." />
     <MESSAGE value="reformatted the html table further" />
     <MESSAGE value="made slight adjustments. fixed 6m band" />
-    <option name="LAST_COMMIT_MESSAGE" value="made slight adjustments. fixed 6m band" />
+    <MESSAGE value="added spotter name to csv file for use in analyzeData.py. Changed table caption to list spotter name and timestamp" />
+    <option name="LAST_COMMIT_MESSAGE" value="added spotter name to csv file for use in analyzeData.py. Changed table caption to list spotter name and timestamp" />
   </component>
 </project>

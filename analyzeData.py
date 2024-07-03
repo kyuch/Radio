@@ -1,5 +1,7 @@
+import time
 from datetime import datetime
 import pandas as pd
+import argparse
 
 
 pd.set_option('display.max_columns', None)
@@ -7,8 +9,21 @@ pd.set_option('display.max_rows', None)
 pd.set_option('display.width', 2000)
 csv_file = 'callsigns.csv'
 
-sparse = 5
-busy = 10
+parser = argparse.ArgumentParser()
+parser.add_argument("-f", "--frequency", help="Specify how often data is collected (in hours). Default = 1",
+                    type=int, default=1)
+parser.add_argument("-l", "--lower",
+                    help="Specify the lower end of the data count threshold (empty square). Default = 5",
+                    type=int, default=5)
+parser.add_argument("-u", "--upper",
+                    help="Specify the upper end of the data count threshold (filled square). Default = 10",
+                    type=int, default=10)
+args = parser.parse_args()
+frequency = args.frequency
+sparse = args.lower
+busy = args.upper
+
+
 # keeping this in case I have to name zones by callsign
 # zone_name_map = {
 #     1: 'one', 2: 'two', 3: 'three', 4: 'four', 5: 'five',
@@ -35,7 +50,6 @@ def reformat_table(table):
 
     flattened1 = flattened1.fillna({' ': ' '})
 
-    print(flattened1)
     return flattened1
 
 
@@ -60,7 +74,6 @@ def replace_values(df):
 def run():  # may make it so that function infinitely runs every hour or so
     df = pd.read_csv(csv_file, keep_default_na=False)
     spotter = df['Spotter'].iloc[0]
-    print(spotter)
     count_table = df.pivot_table(values='SNR', index=['Zone'], columns=['Band'], aggfunc='count')
     count_table = count_table.fillna(0)
     count_table = count_table.astype(int)
@@ -90,8 +103,8 @@ def run():  # may make it so that function infinitely runs every hour or so
     count_table['Zone'] = mean_table['Zone']
     count_table[' '] = mean_table[' ']
 
-    now = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-    caption_string = "Current Conditions at " + spotter + " as of " + now
+    now = datetime.utcnow().strftime("%b %d, %Y %H:%M:%S")
+    caption_string = "Conditions at " + spotter + " as of " + now + " GMT"
     # apply the styles to the dataframes
     styled_table1 = count_table.style.apply(lambda x: color_table1, axis=None).set_caption(
         caption_string)
@@ -107,9 +120,56 @@ def run():  # may make it so that function infinitely runs every hour or so
 
     html1 = styled_table1.hide(axis="index").to_html()
 
+    legend_html = f"""
+    <div style="margin-top: 20px; margin-left: 40px; padding: 10px; border: 1px solid black; width: 200px;">
+        <h3 style="text-align: center;">Legend</h3>
+        <div style="display: flex; align-items: center;">
+            <div style="width: 20px; height: 20px; background-color: #a3cce9; margin-right: 10px;"></div>
+            <div>Cold (≤ -15 dB)</div>
+        </div>
+        <div style="display: flex; align-items: center;">
+            <div style="width: 20px; height: 20px; background-color: #b6e3b5; margin-right: 10px;"></div>
+            <div>Cool (-15 to -10 dB)</div>
+        </div>
+        <div style="display: flex; align-items: center;">
+            <div style="width: 20px; height: 20px; background-color: #f7c896; margin-right: 10px;"></div>
+            <div>Warm (-10 to -3 dB)</div>
+        </div>
+        <div style="display: flex; align-items: center;">
+            <div style="width: 20px; height: 20px; background-color: #e57373; margin-right: 10px;"></div>
+            <div>Hot (> -3 dB)</div>
+        </div>
+        <div style="display: flex; align-items: center;">
+            <div style="font-size: 20px; margin-right: 10px;">◻</div>
+            <div>Sparse (≤ {sparse} callsigns)</div>
+        </div>
+        <div style="display: flex; align-items: center;">
+            <div style="font-size: 16px; margin-right: 10px;">◩</div>
+            <div>Moderate ({sparse + 1} to {busy - 1} callsigns)</div>
+        </div>
+        <div style="display: flex; align-items: center;">
+            <div style="font-size: 20px; margin-right: 10px;">◼</div>
+            <div>Busy (≥ {busy} callsigns)</div>
+        </div>
+    </div>
+    """
+
+
+    final_html = f"""
+        <div style="display: flex;">
+            <div>{html1}</div>
+            <div>{legend_html}</div>
+        </div>
+        """
+
     with open("index.html", "w") as text_file:
-        text_file.write(html1)
+        text_file.write(final_html)
+
+    print("Table updated at index.html at " + now)
 
 
 if __name__ == '__main__':
-    run()
+    time_to_wait = frequency * 3600
+    while True:
+        run()
+        time.sleep(time_to_wait)
