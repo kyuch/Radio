@@ -121,19 +121,19 @@ def run():  # may make it so that function infinitely runs every hour or so
     html1 = styled_table1.hide(axis="index").to_html()
 
     legend_html = f"""
-    <div style="margin-top: 20px; margin-left: 40px; padding: 10px; border: 1px solid black; width: 200px;">
+    <div style="margin-top: 20px; margin-left: 40px; padding: 10px; border: 1px solid black; width: 230px;">
         <h3 style="text-align: center;">Legend</h3>
         <div style="display: flex; align-items: center;">
             <div style="width: 20px; height: 20px; background-color: #a3cce9; margin-right: 10px;"></div>
-            <div>Cold (≤ -15 dB)</div>
+            <div>Marginal (≤ -15 dB)</div>
         </div>
         <div style="display: flex; align-items: center;">
             <div style="width: 20px; height: 20px; background-color: #b6e3b5; margin-right: 10px;"></div>
-            <div>Cool (-15 to -10 dB)</div>
+            <div>Normal (-15 to -10 dB)</div>
         </div>
         <div style="display: flex; align-items: center;">
             <div style="width: 20px; height: 20px; background-color: #f7c896; margin-right: 10px;"></div>
-            <div>Warm (-10 to -3 dB)</div>
+            <div>Above Average (-10 to -3 dB)</div>
         </div>
         <div style="display: flex; align-items: center;">
             <div style="width: 20px; height: 20px; background-color: #e57373; margin-right: 10px;"></div>
@@ -141,15 +141,15 @@ def run():  # may make it so that function infinitely runs every hour or so
         </div>
         <div style="display: flex; align-items: center;">
             <div style="font-size: 20px; margin-right: 10px;">◻</div>
-            <div>Sparse (≤ {sparse} callsigns)</div>
+            <div>Quiet (≤ {sparse} spots)</div>
         </div>
         <div style="display: flex; align-items: center;">
             <div style="font-size: 16px; margin-right: 10px;">◩</div>
-            <div>Moderate ({sparse + 1} to {busy - 1} callsigns)</div>
+            <div>Moderate ({sparse + 1} to {busy - 1} spots)</div>
         </div>
         <div style="display: flex; align-items: center;">
             <div style="font-size: 20px; margin-right: 10px;">◼</div>
-            <div>Busy (≥ {busy} callsigns)</div>
+            <div>Busy (≥ {busy} spots)</div>
         </div>
     </div>
     """
