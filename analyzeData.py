@@ -114,42 +114,42 @@ def run():  # may make it so that function infinitely runs every hour or so
     styled_table1.set_properties(**{'text-align': 'center'})
 
     styled_table1.set_table_styles([
-        {'selector': 'th', 'props': [('font-size', '12pt')]},
-        {'selector': 'td', 'props': [('font-size', '12pt')]},
+        {'selector': 'th', 'props': [('font-size', '10pt')]},
+        {'selector': 'td', 'props': [('font-size', '10pt')]},
     ])
 
     html1 = styled_table1.hide(axis="index").to_html()
 
     legend_html = f"""
-        <div style="margin-top: 20px; padding: 10px; border: 1px solid black; width: fit-content; margin-left: auto; margin-right: auto;">
+        <div style="margin-top: 10px; padding: 10px; border: 1px solid black; width: fit-content; margin-left: auto; margin-right: auto;">
             <div style="display: flex; justify-content: space-around; margin-bottom: 10px;">
-                <div style="display: flex; align-items: center; margin-right: 20px;">
+                <div style="display: flex; align-items: center; margin-right: 20px; font-size: 10pt;">
                     <div style="width: 20px; height: 20px; background-color: #a3cce9; margin-right: 5px;"></div>
                     <div>Marginal (≤ -15 dB)</div>
                 </div>
-                <div style="display: flex; align-items: center; margin-right: 20px;">
+                <div style="display: flex; align-items: center; margin-right: 20px; font-size: 10pt;">
                     <div style="width: 20px; height: 20px; background-color: #b6e3b5; margin-right: 5px;"></div>
                     <div>Normal (-15 to -10 dB)</div>
                 </div>
-                <div style="display: flex; align-items: center; margin-right: 20px;">
+                <div style="display: flex; align-items: center; margin-right: 20px; font-size: 10pt;">
                     <div style="width: 20px; height: 20px; background-color: #f7c896; margin-right: 5px;"></div>
                     <div>Above Average (-10 to -3 dB)</div>
                 </div>
-                <div style="display: flex; align-items: center;">
+                <div style="display: flex; align-items: center; font-size: 10pt;">
                     <div style="width: 20px; height: 20px; background-color: #e57373; margin-right: 5px;"></div>
                     <div>Hot (> -3 dB)</div>
                 </div>
             </div>
             <div style="display: flex; justify-content: space-around;">
-                <div style="display: flex; align-items: center; margin-right: 20px;">
+                <div style="display: flex; align-items: center; margin-right: 20px; font-size: 10pt;">
                     <div style="font-size: 20px; margin-right: 5px;">◻</div>
                     <div>Quiet (≤ {sparse} spots)</div>
                 </div>
-                <div style="display: flex; align-items: center; margin-right: 20px;">
+                <div style="display: flex; align-items: center; margin-right: 20px; font-size: 10pt;">
                     <div style="font-size: 20px; margin-right: 5px;">◩</div>
                     <div>Moderate ({sparse + 1} to {busy - 1} spots)</div>
                 </div>
-                <div style="display: flex; align-items: center;">
+                <div style="display: flex; align-items: center; font-size: 10pt;">
                     <div style="font-size: 20px; margin-right: 5px;">◼</div>
                     <div>Busy (≥ {busy} spots)</div>
                 </div>
