@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="28dd482c-a93d-49e3-b0e6-09d9777c16ac" name="Changes" comment="added legend and made other adjustments">
+    <list default="true" id="28dd482c-a93d-49e3-b0e6-09d9777c16ac" name="Changes" comment="adjusted labels on legend">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/analyzeData.py" beforeDir="false" afterPath="$PROJECT_DIR$/analyzeData.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/index.html" afterDir="false" />
@@ -323,7 +323,15 @@
       <option name="project" value="LOCAL" />
       <updated>1719967374908</updated>
     </task>
-    <option name="localTasksCounter" value="26" />
+    <task id="LOCAL-00026" summary="adjusted labels on legend">
+      <option name="closed" value="true" />
+      <created>1720027684155</created>
+      <option name="number" value="00026" />
+      <option name="presentableId" value="LOCAL-00026" />
+      <option name="project" value="LOCAL" />
+      <updated>1720027684155</updated>
+    </task>
+    <option name="localTasksCounter" value="27" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -361,6 +369,7 @@
     <MESSAGE value="made slight adjustments. fixed 6m band" />
     <MESSAGE value="added spotter name to csv file for use in analyzeData.py. Changed table caption to list spotter name and timestamp" />
     <MESSAGE value="added legend and made other adjustments" />
-    <option name="LAST_COMMIT_MESSAGE" value="added legend and made other adjustments" />
+    <MESSAGE value="adjusted labels on legend" />
+    <option name="LAST_COMMIT_MESSAGE" value="adjusted labels on legend" />
   </component>
 </project>

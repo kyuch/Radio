@@ -121,42 +121,44 @@ def run():  # may make it so that function infinitely runs every hour or so
     html1 = styled_table1.hide(axis="index").to_html()
 
     legend_html = f"""
-    <div style="margin-top: 20px; margin-left: 40px; padding: 10px; border: 1px solid black; width: 230px;">
-        <h3 style="text-align: center;">Legend</h3>
-        <div style="display: flex; align-items: center;">
-            <div style="width: 20px; height: 20px; background-color: #a3cce9; margin-right: 10px;"></div>
-            <div>Marginal (≤ -15 dB)</div>
+        <div style="margin-top: 20px; padding: 10px; border: 1px solid black; width: fit-content; margin-left: auto; margin-right: auto;">
+            <div style="display: flex; justify-content: space-around; margin-bottom: 10px;">
+                <div style="display: flex; align-items: center; margin-right: 20px;">
+                    <div style="width: 20px; height: 20px; background-color: #a3cce9; margin-right: 5px;"></div>
+                    <div>Marginal (≤ -15 dB)</div>
+                </div>
+                <div style="display: flex; align-items: center; margin-right: 20px;">
+                    <div style="width: 20px; height: 20px; background-color: #b6e3b5; margin-right: 5px;"></div>
+                    <div>Normal (-15 to -10 dB)</div>
+                </div>
+                <div style="display: flex; align-items: center; margin-right: 20px;">
+                    <div style="width: 20px; height: 20px; background-color: #f7c896; margin-right: 5px;"></div>
+                    <div>Above Average (-10 to -3 dB)</div>
+                </div>
+                <div style="display: flex; align-items: center;">
+                    <div style="width: 20px; height: 20px; background-color: #e57373; margin-right: 5px;"></div>
+                    <div>Hot (> -3 dB)</div>
+                </div>
+            </div>
+            <div style="display: flex; justify-content: space-around;">
+                <div style="display: flex; align-items: center; margin-right: 20px;">
+                    <div style="font-size: 20px; margin-right: 5px;">◻</div>
+                    <div>Quiet (≤ {sparse} spots)</div>
+                </div>
+                <div style="display: flex; align-items: center; margin-right: 20px;">
+                    <div style="font-size: 20px; margin-right: 5px;">◩</div>
+                    <div>Moderate ({sparse + 1} to {busy - 1} spots)</div>
+                </div>
+                <div style="display: flex; align-items: center;">
+                    <div style="font-size: 20px; margin-right: 5px;">◼</div>
+                    <div>Busy (≥ {busy} spots)</div>
+                </div>
+            </div>
         </div>
-        <div style="display: flex; align-items: center;">
-            <div style="width: 20px; height: 20px; background-color: #b6e3b5; margin-right: 10px;"></div>
-            <div>Normal (-15 to -10 dB)</div>
-        </div>
-        <div style="display: flex; align-items: center;">
-            <div style="width: 20px; height: 20px; background-color: #f7c896; margin-right: 10px;"></div>
-            <div>Above Average (-10 to -3 dB)</div>
-        </div>
-        <div style="display: flex; align-items: center;">
-            <div style="width: 20px; height: 20px; background-color: #e57373; margin-right: 10px;"></div>
-            <div>Hot (> -3 dB)</div>
-        </div>
-        <div style="display: flex; align-items: center;">
-            <div style="font-size: 20px; margin-right: 10px;">◻</div>
-            <div>Quiet (≤ {sparse} spots)</div>
-        </div>
-        <div style="display: flex; align-items: center;">
-            <div style="font-size: 16px; margin-right: 10px;">◩</div>
-            <div>Moderate ({sparse + 1} to {busy - 1} spots)</div>
-        </div>
-        <div style="display: flex; align-items: center;">
-            <div style="font-size: 20px; margin-right: 10px;">◼</div>
-            <div>Busy (≥ {busy} spots)</div>
-        </div>
-    </div>
-    """
-
+        """
 
     final_html = f"""
-        <div style="display: flex;">
+        <div style="display: flex; flex-direction: column; align-items: center;">
             <div>{html1}</div>
             <div>{legend_html}</div>
         </div>
