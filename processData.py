@@ -4,6 +4,10 @@ import plistlib
 from datetime import datetime, timedelta
 import pandas as pd
 import argparse
+import boto3
+
+
+client = boto3.client('s3')
 
 pattern = r'(\d+\.\d{2})\s+([A-Z0-9/]+)\s+(?:FT8|FT4)\s+([+-]\s?\d{1,2})'
 cty_file = "cty.plist"
@@ -19,14 +23,12 @@ parser.add_argument("-p", "--port", help="Specify Telnet port. Default = 7373", 
 parser.add_argument("-l", "--login", help="Specify login for cluster. Default = LZ3NY", default="LZ3NY")
 parser.add_argument("-s", "--spotter",
                     help="Specify spotter name to track. Default = VE3EID", default="VE3EID")
-parser.add_argument("-r", "--range", type=int, default=3,
-                    help="Specify # of hours to store data before dropping. Default = 3")
+
 args = parser.parse_args()
 host = args.address
 port = args.port
 login = args.login
 spotter = args.spotter
-age = args.range
 
 
 def search_list(call_sign, cty_list):
@@ -64,8 +66,8 @@ def calculate_band(freq):
     return band
 
 
-def delete_old(df):  # delete entries older than an hour from the dataframe
-    day_ago = datetime.now().timestamp() - timedelta(hours=age).total_seconds()
+def delete_old(df):  # delete entries older than a day from the dataframe.
+    day_ago = datetime.now().timestamp() - timedelta(days=1).total_seconds()
     print(df[df['Timestamp'] <= day_ago].index)
     df = df.drop(df[df['Timestamp'] <= day_ago].index)
     return df

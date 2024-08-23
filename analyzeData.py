@@ -1,5 +1,5 @@
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 import pandas as pd
 import argparse
 
@@ -18,10 +18,13 @@ parser.add_argument("-l", "--lower",
 parser.add_argument("-u", "--upper",
                     help="Specify the upper end of the data count threshold (filled square). Default = 10",
                     type=int, default=10)
+parser.add_argument("-r", "--range", type=int, default=3,
+                    help="Specify # of hours of data from current time to analyze. Default = 3")
 args = parser.parse_args()
 frequency = args.frequency
 sparse = args.lower
 busy = args.upper
+span = args.range
 
 
 # keeping this in case I have to name zones by callsign
@@ -53,6 +56,13 @@ def reformat_table(table):
     return flattened1
 
 
+def delete_old(df):  # delete entries older than an hour from the dataframe
+    day_ago = datetime.now().timestamp() - timedelta(hours=span).total_seconds()
+    print(df[df['Timestamp'] <= day_ago].index)
+    df = df.drop(df[df['Timestamp'] <= day_ago].index)
+    return df
+
+
 def replace_values(df):
     df = df.fillna(0)
 
@@ -74,6 +84,7 @@ def replace_values(df):
 def run():  # may make it so that function infinitely runs every hour or so
     df = pd.read_csv(csv_file, keep_default_na=False)
     spotter = df['Spotter'].iloc[0]
+    df = delete_old(df)  # ignores any data older than range from the csv.
     count_table = df.pivot_table(values='SNR', index=['Zone'], columns=['Band'], aggfunc='count')
     count_table = count_table.fillna(0)
     count_table = count_table.astype(int)
