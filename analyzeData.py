@@ -2,6 +2,8 @@ import time
 from datetime import datetime, timedelta
 import pandas as pd
 import argparse
+import boto3
+from botocore.exceptions import NoCredentialsError, PartialCredentialsError
 
 
 pd.set_option('display.max_columns', None)
@@ -27,19 +29,45 @@ busy = args.upper
 span = args.range
 
 
-# keeping this in case I have to name zones by callsign
-# zone_name_map = {
-#     1: 'one', 2: 'two', 3: 'three', 4: 'four', 5: 'five',
-#     6: 'six', 7: 'seven', 8: 'eight', 9: 'nine', 10: 'ten',
-#     11: 'eleven', 12: 'twelve', 13: 'thirteen', 14: 'fourteen',
-#     15: 'fifteen', 16: 'sixteen', 17: 'seventeen', 18: 'eighteen',
-#     19: 'nineteen', 20: 'twenty', 21: 'twenty-one', 22: 'twenty-two',
-#     23: 'twenty-three', 24: 'twenty-four', 25: 'twenty-five', 26: 'twenty-six',
-#     27: 'twenty-seven', 28: 'twenty-eight', 29: 'twenty-nine', 30: 'thirty',
-#     31: 'thirty-one', 32: 'thirty-two', 33: 'thirty-three', 34: 'thirty-four',
-#     35: 'thirty-five', 36: 'thirty-six', 37: 'thirty-seven', 38: 'thirty-eight',
-#     39: 'thirty-nine', 40: 'forty'
-# }
+def get_aws_credentials():
+    """
+    Prompts the user to input their AWS credentials.
+
+    :return: A dictionary containing 'aws_access_key_id' and 'aws_secret_access_key'
+    """
+    access_key = input("Enter your AWS Access Key ID: ")
+    secret_key = input("Enter your AWS Secret Access Key: ")
+    bucket = input("Enter the name of the S3 Bucket you'd like to write to: ")
+    return {
+        'aws_access_key_id': access_key,
+        'aws_secret_access_key': secret_key,
+        's3_bucket': bucket
+    }
+
+
+def upload_file_to_s3(file_name, bucket_name, acc_key, sec_key):
+    creds = {
+        'aws_access_key_id': acc_key,
+        'aws_secret_access_key': sec_key
+    }
+    s3_client = boto3.client('s3', **creds)
+    timestamp = datetime.now().strftime('%m.%d.%Y-%H:%M:%S')
+    obj_name = 'radio_chart_' + timestamp + '.html'
+
+    try:
+        s3_client.upload_file(file_name, bucket_name, obj_name)
+        print(f"File {file_name} uploaded successfully to {bucket_name}/{obj_name}")
+        return True
+    except FileNotFoundError:
+        print(f"The file {file_name} was not found")
+    except NoCredentialsError:
+        print("Credentials not available")
+    except PartialCredentialsError:
+        print("Incomplete credentials provided")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+    return False
 
 
 def reformat_table(table):
@@ -56,7 +84,7 @@ def reformat_table(table):
     return flattened1
 
 
-def delete_old(df):  # delete entries older than an hour from the dataframe
+def delete_old(df):  # delete entries older than the range from the dataframe
     day_ago = datetime.now().timestamp() - timedelta(hours=span).total_seconds()
     print(df[df['Timestamp'] <= day_ago].index)
     df = df.drop(df[df['Timestamp'] <= day_ago].index)
@@ -81,7 +109,7 @@ def replace_values(df):
     return df.map(replace_value)
 
 
-def run():  # may make it so that function infinitely runs every hour or so
+def run(access_key, secret_key, s3_buck):
     df = pd.read_csv(csv_file, keep_default_na=False)
     spotter = df['Spotter'].iloc[0]
     df = delete_old(df)  # ignores any data older than range from the csv.
@@ -179,10 +207,16 @@ def run():  # may make it so that function infinitely runs every hour or so
         text_file.write(final_html)
 
     print("Table updated at index.html at " + now)
+    upload_file_to_s3("index.html", s3_buck, access_key, secret_key)
 
 
 if __name__ == '__main__':
     time_to_wait = frequency * 3600
+    credentials = get_aws_credentials()
+    aws_access_key = credentials['aws_access_key_id']
+    secret_access_key = credentials['aws_secret_access_key']
+    s3_bucket = credentials['s3_bucket']
+
     while True:
-        run()
+        run(aws_access_key, secret_access_key, s3_bucket)
         time.sleep(time_to_wait)

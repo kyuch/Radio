@@ -4,12 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="28dd482c-a93d-49e3-b0e6-09d9777c16ac" name="Changes" comment="adjusted font size slightly">
+    <list default="true" id="28dd482c-a93d-49e3-b0e6-09d9777c16ac" name="Changes" comment="removed range argument from processData.py and added it to analyzeData.py. processData will now store last 24 hours of data no matter what, and user can choose range of data to analyze from in analyzeData.py.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/analyzeData.py" beforeDir="false" afterPath="$PROJECT_DIR$/analyzeData.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/callsigns.csv" beforeDir="false" afterPath="$PROJECT_DIR$/callsigns.csv" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/index.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/processData.py" beforeDir="false" afterPath="$PROJECT_DIR$/processData.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -353,7 +352,15 @@
       <option name="project" value="LOCAL" />
       <updated>1720320770735</updated>
     </task>
-    <option name="localTasksCounter" value="29" />
+    <task id="LOCAL-00029" summary="removed range argument from processData.py and added it to analyzeData.py. processData will now store last 24 hours of data no matter what, and user can choose range of data to analyze from in analyzeData.py.">
+      <option name="closed" value="true" />
+      <created>1724453712356</created>
+      <option name="number" value="00029" />
+      <option name="presentableId" value="LOCAL-00029" />
+      <option name="project" value="LOCAL" />
+      <updated>1724453712356</updated>
+    </task>
+    <option name="localTasksCounter" value="30" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -368,7 +375,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="implemented regex to parse callsign/freq/snr." />
     <MESSAGE value="implemented search for continent/country/zone using cty.plist" />
     <MESSAGE value="implemented dictionary for enhanced callsigns. also adjusted regex slightly" />
     <MESSAGE value="implemented conversion from dictionary to csv for testing purposes" />
@@ -393,6 +399,7 @@
     <MESSAGE value="adjusted labels on legend" />
     <MESSAGE value="adjusted layout of html" />
     <MESSAGE value="adjusted font size slightly" />
-    <option name="LAST_COMMIT_MESSAGE" value="adjusted font size slightly" />
+    <MESSAGE value="removed range argument from processData.py and added it to analyzeData.py. processData will now store last 24 hours of data no matter what, and user can choose range of data to analyze from in analyzeData.py." />
+    <option name="LAST_COMMIT_MESSAGE" value="removed range argument from processData.py and added it to analyzeData.py. processData will now store last 24 hours of data no matter what, and user can choose range of data to analyze from in analyzeData.py." />
   </component>
 </project>
