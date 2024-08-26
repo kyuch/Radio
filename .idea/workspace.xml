@@ -4,11 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="28dd482c-a93d-49e3-b0e6-09d9777c16ac" name="Changes" comment="analyzeData.py now writes the radio charts to an S3 bucket when provided access key, secret key, and bucket name.">
+    <list default="true" id="28dd482c-a93d-49e3-b0e6-09d9777c16ac" name="Changes" comment="index.html now auto-refreshes, can be hosted on S3 bucket and tested successfully.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/analyzeData.py" beforeDir="false" afterPath="$PROJECT_DIR$/analyzeData.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/callsigns.csv" beforeDir="false" afterPath="$PROJECT_DIR$/callsigns.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/index.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -368,7 +366,15 @@
       <option name="project" value="LOCAL" />
       <updated>1724548168379</updated>
     </task>
-    <option name="localTasksCounter" value="31" />
+    <task id="LOCAL-00031" summary="index.html now auto-refreshes, can be hosted on S3 bucket and tested successfully.">
+      <option name="closed" value="true" />
+      <created>1724713372229</created>
+      <option name="number" value="00031" />
+      <option name="presentableId" value="LOCAL-00031" />
+      <option name="project" value="LOCAL" />
+      <updated>1724713372229</updated>
+    </task>
+    <option name="localTasksCounter" value="32" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -383,7 +389,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="implemented dictionary for enhanced callsigns. also adjusted regex slightly" />
     <MESSAGE value="implemented conversion from dictionary to csv for testing purposes" />
     <MESSAGE value="Implemented bugfix for decoding and fixed csv conversion" />
     <MESSAGE value="added bands" />
@@ -408,6 +413,7 @@
     <MESSAGE value="adjusted font size slightly" />
     <MESSAGE value="removed range argument from processData.py and added it to analyzeData.py. processData will now store last 24 hours of data no matter what, and user can choose range of data to analyze from in analyzeData.py." />
     <MESSAGE value="analyzeData.py now writes the radio charts to an S3 bucket when provided access key, secret key, and bucket name." />
-    <option name="LAST_COMMIT_MESSAGE" value="analyzeData.py now writes the radio charts to an S3 bucket when provided access key, secret key, and bucket name." />
+    <MESSAGE value="index.html now auto-refreshes, can be hosted on S3 bucket and tested successfully." />
+    <option name="LAST_COMMIT_MESSAGE" value="index.html now auto-refreshes, can be hosted on S3 bucket and tested successfully." />
   </component>
 </project>
