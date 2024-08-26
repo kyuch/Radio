@@ -13,7 +13,7 @@ csv_file = 'callsigns.csv'
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-f", "--frequency", help="Specify how often data is collected (in hours). Default = 1",
-                    type=int, default=1)
+                    type=float, default=1)
 parser.add_argument("-l", "--lower",
                     help="Specify the lower end of the data count threshold (empty square). Default = 5",
                     type=int, default=5)
@@ -51,11 +51,10 @@ def upload_file_to_s3(file_name, bucket_name, acc_key, sec_key):
         'aws_secret_access_key': sec_key
     }
     s3_client = boto3.client('s3', **creds)
-    timestamp = datetime.now().strftime('%m.%d.%Y-%H:%M:%S')
-    obj_name = 'radio_chart_' + timestamp + '.html'
+    obj_name = 'index.html'
 
     try:
-        s3_client.upload_file(file_name, bucket_name, obj_name)
+        s3_client.upload_file(file_name, bucket_name, obj_name, ExtraArgs={'ContentType':'text/html; charset=utf-8'})
         print(f"File {file_name} uploaded successfully to {bucket_name}/{obj_name}")
         return True
     except FileNotFoundError:
@@ -160,6 +159,7 @@ def run(access_key, secret_key, s3_buck):
     html1 = styled_table1.hide(axis="index").to_html()
 
     legend_html = f"""
+    <head> <meta http-equiv="refresh" content="60"> </head> 
         <div style="margin-top: 10px; padding: 10px; border: 1px solid black; width: fit-content; margin-left: auto; margin-right: auto;">
             <div style="display: flex; justify-content: space-around; margin-bottom: 10px;">
                 <div style="display: flex; align-items: center; margin-right: 20px; font-size: 10pt;">
@@ -206,7 +206,7 @@ def run(access_key, secret_key, s3_buck):
     with open("index.html", "w") as text_file:
         text_file.write(final_html)
 
-    print("Table updated at index.html at " + now)
+    print("Table updated in index.html at " + now)
     upload_file_to_s3("index.html", s3_buck, access_key, secret_key)
 
 
