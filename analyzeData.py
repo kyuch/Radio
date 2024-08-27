@@ -12,8 +12,8 @@ pd.set_option('display.width', 2000)
 csv_file = 'callsigns.csv'
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-f", "--frequency", help="Specify how often data is collected (in minutes). Default = 30",
-                    type=float, default=30)
+parser.add_argument("-f", "--frequency", help="Specify how often data is collected (in minutes). Default = 1",
+                    type=float, default=1)
 parser.add_argument("-l", "--lower",
                     help="Specify the lower end of the data count threshold (empty square). Default = 5",
                     type=int, default=5)
@@ -203,7 +203,7 @@ def run(access_key, secret_key, s3_buck):
         </div>
         """
 
-    with open("index.html", "w") as text_file:
+    with open("index.html", "w", encoding="utf-8") as text_file:
         text_file.write(final_html)
 
     print("Table updated in index.html at " + now)
