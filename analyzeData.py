@@ -144,13 +144,13 @@ def run(access_key, secret_key, s3_buck):
     now = datetime.utcnow().strftime("%b %d, %Y %H:%M:%S")
     caption_string = "Conditions at " + spotter + " as of " + now + " GMT"
 
-    # apply the styles to the dataframes
+    # Apply the styles to the dataframes
     styled_table1 = count_table.style.apply(lambda x: color_table1, axis=None).set_caption(caption_string)
 
     styled_table1.set_properties(subset=['Zone'], **{'font-weight': 'bold'})
     styled_table1.set_properties(**{'text-align': 'center'})
 
-    #aApply larger font sizes to the first column and header row
+    # Apply larger font sizes to the first column and header row
     styled_table1.set_table_styles([
         {'selector': 'caption', 'props': [('font-size', '12pt'), ('font-weight', 'bold')]},
         {'selector': 'th',
@@ -160,49 +160,64 @@ def run(access_key, secret_key, s3_buck):
         {'selector': 'td', 'props': [('font-size', '10pt'), ('padding', '8px'), ('word-wrap', 'break-word')]},
     ])
 
-    # convert the styled table to HTML
+    # Convert the styled table to HTML
     html1 = styled_table1.hide(axis="index").to_html()
+
+    # Add specific widths for columns
+    # Modify the table HTML to include colgroup for column widths
     html1 = html1.replace('<table ',
-                          '<table style="width: 50%; table-layout: fixed; margin-left: auto; margin-right: auto;" ')
+                          '<table style="width: 40%; table-layout: fixed; margin-left: auto; margin-right: auto;" ')
+    html1 = html1.replace('<thead>',
+                          '<thead><colgroup><col style="width: 55px;"></colgroup>')
 
     # legend HTML
     legend_html = f"""
-    <head> <meta http-equiv="refresh" content="60"> </head> 
-    <div style="position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 80%; background-color: rgba(255, 255, 255, 0.75); padding: 10px; border: 1px solid gray; box-sizing: border-box; z-index: 1000;">
-        <div style="display: flex; justify-content: space-around; margin-bottom: 10px;">
-            <div style="display: flex; align-items: center; margin-right: 20px; font-size: 10pt;">
-                <div style="width: 20px; height: 20px; background-color: #a3cce9; margin-right: 5px;"></div>
-                <div>Marginal (≤ -15 dB)</div>
-            </div>
-            <div style="display: flex; align-items: center; margin-right: 20px; font-size: 10pt;">
-                <div style="width: 20px; height: 20px; background-color: #b6e3b5; margin-right: 5px;"></div>
-                <div>Normal (-15 to -10 dB)</div>
-            </div>
-            <div style="display: flex; align-items: center; margin-right: 20px; font-size: 10pt;">
-                <div style="width: 20px; height: 20px; background-color: #f7c896; margin-right: 5px;"></div>
-                <div>Above Average (-10 to -3 dB)</div>
-            </div>
-            <div style="display: flex; align-items: center; font-size: 10pt;">
-                <div style="width: 20px; height: 20px; background-color: #e57373; margin-right: 5px;"></div>
-                <div>Hot (> -3 dB)</div>
-            </div>
-        </div>
-        <div style="display: flex; justify-content: space-around;">
-            <div style="display: flex; align-items: center; margin-right: 20px; font-size: 10pt;">
-                <div style="font-size: 20px; margin-right: 5px;">◻</div>
-                <div>Quiet (≤ {sparse} spots)</div>
-            </div>
-            <div style="display: flex; align-items: center; margin-right: 20px; font-size: 10pt;">
-                <div style="font-size: 20px; margin-right: 5px;">◩</div>
-                <div>Moderate ({sparse + 1} to {busy - 1} spots)</div>
-            </div>
-            <div style="display: flex; align-items: center; font-size: 10pt;">
-                <div style="font-size: 20px; margin-right: 5px;">◼</div>
-                <div>Busy (≥ {busy} spots)</div>
-            </div>
-        </div>
-    </div>
-    """
+     <head> <meta http-equiv="refresh" content="60"> </head> 
+     <div style="position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 80%; background-color: rgba(255, 255, 255, 0.75); padding: 10px; border: 1px solid gray; box-sizing: border-box; z-index: 1000;">
+         <div style="display: flex; justify-content: space-around; margin-bottom: 10px;">
+             <div style="display: flex; align-items: center; margin-right: 20px; font-size: 10pt;">
+                 <div style="width: 20px; height: 20px; background-color: #a3cce9; margin-right: 5px;"></div>
+                 <div>Marginal (≤ -15 dB)</div>
+             </div>
+             <div style="display: flex; align-items: center; margin-right: 20px; font-size: 10pt;">
+                 <div style="width: 20px; height: 20px; background-color: #b6e3b5; margin-right: 5px;"></div>
+                 <div>Normal (-15 to -10 dB)</div>
+             </div>
+             <div style="display: flex; align-items: center; margin-right: 20px; font-size: 10pt;">
+                 <div style="width: 20px; height: 20px; background-color: #f7c896; margin-right: 5px;"></div>
+                 <div>Above Average (-10 to -3 dB)</div>
+             </div>
+             <div style="display: flex; align-items: center; font-size: 10pt;">
+                 <div style="width: 20px; height: 20px; background-color: #e57373; margin-right: 5px;"></div>
+                 <div>Hot (> -3 dB)</div>
+             </div>
+         </div>
+         <div style="display: flex; justify-content: space-around;">
+             <div style="display: flex; align-items: center; margin-right: 20px; font-size: 10pt;">
+                 <div style="font-size: 20px; margin-right: 5px;">◻</div>
+                 <div>Quiet (≤ {sparse} spots)</div>
+             </div>
+             <div style="display: flex; align-items: center; margin-right: 20px; font-size: 10pt;">
+                 <div style="font-size: 20px; margin-right: 5px;">◩</div>
+                 <div>Moderate ({sparse + 1} to {busy - 1} spots)</div>
+             </div>
+             <div style="display: flex; align-items: center; font-size: 10pt;">
+                 <div style="font-size: 20px; margin-right: 5px;">◼</div>
+                 <div>Busy (≥ {busy} spots)</div>
+             </div>
+         </div>
+     </div>
+     """
+
+    # final HTML with scrollable table
+    final_html = f"""
+     <div style="position: relative; width: 100%; height: 100%;">
+         <div style="max-height: 80vh; overflow-y: auto; padding-bottom: 10%;"> <!-- This div creates the scrollable area -->
+             {html1}
+         </div>
+         <div>{legend_html}</div>
+     </div>
+     """
 
     # final HTML with scrollable table
     final_html = f"""
