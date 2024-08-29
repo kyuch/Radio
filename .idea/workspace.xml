@@ -4,11 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="28dd482c-a93d-49e3-b0e6-09d9777c16ac" name="Changes" comment="made table skinnier">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+    <list default="true" id="28dd482c-a93d-49e3-b0e6-09d9777c16ac" name="Changes" comment="made changes to webpage. added continent names to zone numbers too.">
       <change beforePath="$PROJECT_DIR$/analyzeData.py" beforeDir="false" afterPath="$PROJECT_DIR$/analyzeData.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/callsigns.csv" beforeDir="false" afterPath="$PROJECT_DIR$/callsigns.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/index.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -384,7 +381,15 @@
       <option name="project" value="LOCAL" />
       <updated>1724809227093</updated>
     </task>
-    <option name="localTasksCounter" value="33" />
+    <task id="LOCAL-00033" summary="made changes to webpage. added continent names to zone numbers too.">
+      <option name="closed" value="true" />
+      <created>1724899343413</created>
+      <option name="number" value="00033" />
+      <option name="presentableId" value="LOCAL-00033" />
+      <option name="project" value="LOCAL" />
+      <updated>1724899343413</updated>
+    </task>
+    <option name="localTasksCounter" value="34" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -399,7 +404,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Implemented bugfix for decoding and fixed csv conversion" />
     <MESSAGE value="added bands" />
     <MESSAGE value="skipping 6 and 60 bands. also added statement to skip callsign if frequency doesn't match band criteria" />
     <MESSAGE value="replaced dictionary with pandas DataFrame" />
@@ -424,6 +428,7 @@
     <MESSAGE value="analyzeData.py now writes the radio charts to an S3 bucket when provided access key, secret key, and bucket name." />
     <MESSAGE value="index.html now auto-refreshes, can be hosted on S3 bucket and tested successfully." />
     <MESSAGE value="made table skinnier" />
-    <option name="LAST_COMMIT_MESSAGE" value="made table skinnier" />
+    <MESSAGE value="made changes to webpage. added continent names to zone numbers too." />
+    <option name="LAST_COMMIT_MESSAGE" value="made changes to webpage. added continent names to zone numbers too." />
   </component>
 </project>
