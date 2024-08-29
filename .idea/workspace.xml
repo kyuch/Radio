@@ -5,6 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="28dd482c-a93d-49e3-b0e6-09d9777c16ac" name="Changes" comment="made changes to webpage. added continent names to zone numbers too.">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/analyzeData.py" beforeDir="false" afterPath="$PROJECT_DIR$/analyzeData.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -100,8 +101,8 @@
       <method v="2" />
     </configuration>
     <list>
-      <item itemvalue="Python.processData" />
       <item itemvalue="Python.analyzeData" />
+      <item itemvalue="Python.processData" />
     </list>
     <recent_temporary>
       <list>
