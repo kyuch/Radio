@@ -30,18 +30,48 @@ sparse = args.lower
 busy = args.upper
 span = args.range
 
-# mapping zone numbers to continent-zone pairs
+# mapping zone numbers to descriptions...
 zone_name_map = {
-    1: 'NA-1', 2: 'NA-2', 3: 'NA-3', 4: 'NA-4', 5: 'NA-5',
-    6: 'NA-6', 7: 'NA-7', 8: 'NA-8', 9: 'SA-9', 10: 'SA-10',
-    11: 'SA-11', 12: 'SA-12', 13: 'EU-13', 14: 'EU-14',
-    15: 'EU-15', 16: 'EU-16', 17: 'EU-17', 18: 'EU-18',
-    19: 'AS-19', 20: 'EU/AS-20', 21: 'AS-21', 22: 'AS-22',
-    23: 'AS-23', 24: 'AS-24', 25: 'AS-25', 26: 'AS-26',
-    27: 'AS-27', 28: 'AS-28', 29: 'OC-29', 30: 'OC-30',
-    31: 'OC-31', 32: 'OC-32', 33: 'AF-33', 34: 'AF-34',
-    35: 'AF-35', 36: 'AF-36', 37: 'AF-37', 38: 'AF-38',
-    39: 'AF-39', 40: 'EU-40'
+    1: 'Northwestern Zone of North America: KL (Alaska), VY1/VE8 Yukon, the Northwest and Nunavut Territories west of 102 degrees (Includes the islands of Victoria, Banks, Melville, and Prince Patrick).',
+    2: 'Northeastern Zone of North America: VO2 Labrador, the portion of VE2 Quebec north of the 50th parallel, the VE8 Northwest and Nunavut Territories east of 102 degrees (Includes the islands of King Christian, King William, Prince of Wales, Somerset, Bathurst, Devon, Ellesmere, Baffin and the Melville and Boothia Peninsulas, excluding Akimiski Island).',
+    3: 'Western Zone of North America: VE7, W6, and the W7 states of Arizona, Idaho, Nevada, Oregon, Utah, and Washington.',
+    4: 'Central Zone of North America: VE3, VE4, VE5, VE6, VE8 Akimiski Island, and W7 states of Montana and Wyoming. W0, W9, W8 (except West Virginia), W5, and the W4 states of Alabama, Tennessee, and Kentucky.',
+    5: 'Eastern Zone of North America: 4U1UN, CY9, CY0, FP, VE1, VE9, VY2, VO1 and the portion of VE2 Quebec south of the 50th parallel. VP9, W1, W2, W3 and the W4 states of Florida, Georgia, South Carolina, North Carolina, Virginia and the W8 state of West Virginia.',
+    6: 'Southern Zone of North America: XE/XF, XF4 (Revilla Gigedo).',
+    7: 'Central American Zone: FO (Clipperton), HK0 (San Andres and Providencia), HP, HR, TG, TI, TI9, V3, YN and YS.',
+    8: 'West Indies Zone: C6, CO, FG, FJ, FM, FS, HH, HI, J3, J6, J7, J8, KG4 (Guantanamo), KP1, KP2, KP4, KP5, PJ (Saba, St. Maarten, St. Eustatius), V2, V4, VP2, VP5, YV0 (Aves Is.), ZF, 6Y, and 8P.',
+    9: 'Northern Zone of South America: FY, HK, HK0 (Malpelo), P4, PJ (Bonaire, Curacao), PZ, YV, 8R, and 9Y.',
+    10: 'Western Zone of South America: CP, HC, HC8, and OA.',
+    11: 'Central Zone of South America: PY, PY0, and ZP.',
+    12: 'Southwest Zone of South America: 3Y (Peter I), CE, CE0 (Easter Is., Juan Fernandez Is., San Felix Is.), and some Antarctic stations.',
+    13: 'Southeast Zone of South America: CX, LU, VP8 Islands, and some Antarctic stations.',
+    14: 'Western Zone of Europe: C3, CT, CU, DL, EA, EA6, El, F, G, GD, GI, GJ, GM. GU, GW, HB, HB0, LA, LX, ON, OY, OZ, PA, SM, ZB, 3A and 4U1ITU.',
+    15: 'Central European Zone: ES, HA, HV, I, IS0, LY, OE, OH, OH0, OJ0, OK, OM, S5, SP, T7, T9, TK, UA2, YL, YU, ZA, 1A0, Z3, 9A, 9H and 4U1VIC.',
+    16: 'Eastern Zone of Europe: UR-UZ, EU-EW, ER, UA1, UA3, UA4, UA6, UA9 (S, T, W), and R1MV (Malyj Vysotskij).',
+    17: 'Western Zone of Siberia: EZ, EY, EX, UA9 (A, C, F, G, J, K, L, M, Q, X) UK, UN-UQ, UH, UI and UJ-UM.',
+    18: 'Central Siberian Zone: UA8 (T, V), UA9 (H, O, U, Y, Z), and UA0 (A, B, H, O, S, U, W).',
+    19: 'Eastern Siberian Zone: UA0 (C, D, E, I, J, K, L, Q, X, Z).',
+    20: 'Balkan Zone: E4, JY, LZ, OD, SV, SV5, SV9, SV/A, TA, YK, YO, ZC4, 4X and 5B.',
+    21: 'Southwestern Zone of Asia: 4J, 4K, 4L, A4, A6, A7, A9, AP, EK, EP, HZ, YA, YI, 7O and 9K.',
+    22: 'Southern Zone of Asia: A5, S2, VU, VU (Lakshadweep Is.), 4S, 8Q, and 9N.',
+    23: 'Central Zone of Asia: JT, UA0Y, BY3G-L (Nei Mongol), BY9, BY0.',
+    24: 'Eastern Zone of Asia: BQ9 (Pratas), BV, BY1, BY2, BY3A-F (Tian Jin), BY3M-R (He Bei), BY3S-X (Shan Xi), BY4, BY5, BY6, BY7, BY8, VR and XX.',
+    25: 'Japanese Zone: HL, JA and P5.',
+    26: 'Southeastern Zone of Asia: HS, VU (Andaman and Nicobar Islands), XV(3W), XU, XW, XZ and 1S (Spratly Islands).',
+    27: 'Philippine Zone: DU (Philippines), JD1 (Minami Torishima), JD1 (Ogasawara), T8(KC6) (Palau), KH2 (Guam), KH0 (Marianas Is.), V6 (Fed. States of Micronesia) and BS7 (Scarborough Reef).',
+    28: 'Indonesian Zone: H4, P2, V8, YB, 4W (East Timor), 9M and 9V.',
+    29: 'Western Zone of Australia: VK6, VK8, VK9X (Christmas Is.), VK9C (Cocos-Keeling Is.) and some Antarctic stations.',
+    30: 'Eastern Zone of Australia: FK/C (Chesterfield), VK1-5, VK7, VK9L (Lord Howe Is.), VK9W (Willis Is.), VK9M (Mellish Reef), VK0 (Macquarie Is.) and some Antarctic stations.',
+    31: 'Central Pacific Zone: C2, FO (Marquesas), KH1, KH3, KH4, KH5, KH5K, KH6, KH7, KH7K, KH9, T2, T3, V7 and ZK3.',
+    32: 'New Zealand Zone: A3, FK (except Chesterfield), FO (except Marquesas and Clipperton), FW, H40(Temotu), KH8, VK9N (Norfolk Is.) VP6 (Pitcairn and Ducie), YJ, ZK1, ZK2, ZL, ZL7, ZL8, 3D2, 5W and some Antarctic stations.',
+    33: 'Northwestern Zone of Africa: CN, CT3, EA8, EA9, IG9, IH9 (Pantelleria Is.), S0, 3V and 7X.',
+    34: 'Northeastern Zone of Africa: ST, SU and 5A.',
+    35: 'Central Zone of Africa: C5, D4, EL J5, TU, TY, TZ, XT, 3X, 5N, 5T, 5U, 5V, 6W, 9G and 9L.',
+    36: 'Equatorial Zone of Africa: D2, TJ, TL, TN, S9, TR, TT, ZD7, ZD8, 3C, 3C0, 9J, 9Q, 9U and 9X.',
+    37: 'Eastern Zone of Africa: C9, ET, E3, J2, T5, 5H, 5X, 5Z, 7O and 7Q.',
+    38: 'South African Zone: A2, V5, ZD9, Z2, ZS1-ZS8, 3DA, 3Y (Bouvet Is.), 7P, and some Antarctic stations.',
+    39: 'Madagascar Zone: D6, FT-W, FT-X, FT-Z, FH, FR, S7, VK0 (Heard Is.) VQ9, 3B6/7, 3B8, 3B9, 5R8 and some Antarctic stations.',
+    40: 'North Atlantic Zone: JW, JX, OX, R1FJ (Franz Josef Land), and TF.'
 }
 
 def get_aws_credentials():
@@ -87,7 +117,7 @@ def upload_file_to_s3(file_name, bucket_name, acc_key, sec_key):
 
 def reformat_table(table):
     flattened = pd.DataFrame(table.to_records())
-    flattened['Zone'] = flattened['Zone'].apply(lambda x: zone_name_map.get(x, ''))
+    flattened['Zone'] = flattened['Zone'].apply(lambda x: f'<span title="{zone_name_map.get(x, "")}">{str(x).zfill(2)}</span>')
     flattened.reset_index(drop=True)
     flattened1 = (flattened.reindex(
         ['Zone', '160', '80', '40', '20', '15', '10', '6', ' ', '30', '17', '12'], axis=1))
@@ -180,8 +210,8 @@ def run(access_key, secret_key, s3_buck):
 
     html1 = html1.replace('<table ',
                           '<table style="width: 60vw; table-layout: fixed; margin-left: auto; margin-right: auto;" ')
-    html1 = html1.replace('<thead>',
-                          '<thead><colgroup><col style="width: 118px;"></colgroup>')
+    # html1 = html1.replace('<thead>',
+    #                       '<thead><colgroup><col style="width: 118px;"></colgroup>')
 
     # legend HTML
     legend_html = f"""
@@ -231,7 +261,6 @@ def run(access_key, secret_key, s3_buck):
     solar_data = {
         "SFI": root.findtext("solardata/solarflux"),
         "Sunspots": root.findtext("solardata/sunspots"),
-        "Updated": root.findtext("solardata/updated"),
         "A-Index": root.findtext("solardata/aindex"),
         "K-Index": root.findtext("solardata/kindex"),
         "X-Ray": root.findtext("solardata/xray"),
@@ -254,13 +283,10 @@ def run(access_key, secret_key, s3_buck):
         if band_name in conditions:
             conditions[band_name][time.capitalize()] = condition
 
-    # create the HTML table
+    # Create the HTML table
     solar_table_html = """
-    <div style="width: 100%; text-align: center; font-weight: bold; margin-bottom: 10px;">Solar-Terrestrial Data</div>
+    <div style="width: 100%; text-align: center; font-weight: bold; margin-bottom: 5px;">Solar-Terrestrial Data</div>
     <hr>
-    <div style="text-align: center; margin-bottom: 10px; font-weight: bold;">
-        {Updated}
-    </div>
     <div style="display: flex; justify-content: center; margin-bottom: 5px;">
         <div style="margin-right: 20px;">
             <span style="font-weight: bold;">SFI:</span> <span style="font-weight: bold;">{SFI}</span>
@@ -270,21 +296,21 @@ def run(access_key, secret_key, s3_buck):
         </div>
     </div>
     <div style="display: flex; justify-content: center; margin-bottom: 5px;">
-        <div style="margin-right: 20px;">
-            <span style="font-weight: bold;">A-Index:</span> <span style="font-weight: bold;">{A-Index}</span>
-        </div>
-        <div>
-            <span style="font-weight: bold;">K-Index:</span> <span style="font-weight: bold;">{K-Index}</span>
-        </div>
+    <div style="flex: 1; text-align: center;">
+        <span style="font-weight: bold;">A:</span> <span style="font-weight: bold;">{A-Index}</span>
     </div>
-    <div style="text-align: center; margin-bottom: 10px;">
-        <span style="font-weight: bold;">X-Ray:</span> <span style="font-weight: bold;">{X-Ray}</span>
+    <div style="flex: 1; text-align: center;">
+        <span style="font-weight: bold;">K:</span> <span style="font-weight: bold;">{K-Index}</span>
     </div>
+    <div style="flex: 1; text-align: center;">
+        <span style="font-weight: bold;">X:</span> <span style="font-weight: bold;">{X-Ray}</span>
+    </div>
+</div>
     <hr>
-    <div style="width: 100%; text-align: center; font-weight: bold; margin-bottom: 10px;">Calculated Conditions</div>
+    <div style="width: 100%; text-align: center; font-weight: bold; margin-bottom: 5px;">Calculated Conditions</div>
     <table style="width: 60%; margin: 0 auto; border-collapse: collapse;">
         <thead>
-            <tr">
+            <tr>
                 <th style="padding: 5px; text-align: center; font-weight: bold;">Band</th>
                 <th style="padding: 5px; text-align: center; font-weight: bold;">Day</th>
                 <th style="padding: 5px; text-align: center; font-weight: bold;">Night</th>
@@ -302,9 +328,9 @@ def run(access_key, secret_key, s3_buck):
 
         solar_table_html += f"""
         <tr>
-            <td style="padding: 5px; text-align: center; font-weight: bold;">{band}</td>
-            <td style="padding: 5px; text-align: center; font-weight: bold; color: {day_color};">{day_condition}</td>
-            <td style="padding: 5px; text-align: center; font-weight: bold; color: {night_color};">{night_condition}</td>
+            <td style="padding: 5px; text-align: center; font-weight: bold; white-space: nowrap;">{band}</td>
+            <td style="padding: 5px; text-align: center; font-weight: bold; color: {day_color}; white-space: nowrap;">{day_condition}</td>
+            <td style="padding: 5px; text-align: center; font-weight: bold; color: {night_color}; white-space: nowrap;">{night_condition}</td>
         </tr>
         """
 
@@ -315,7 +341,6 @@ def run(access_key, secret_key, s3_buck):
     <div style="margin-top: 5px; text-align: center">
             <span style="font-weight: bold;">Signal Noise:</span> <span style="font-weight: bold;">{Signal Noise}</span>
         </div>
-    
     """
 
     # Insert the solar data values into the HTML template
