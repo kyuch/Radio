@@ -4,6 +4,8 @@ import pandas as pd
 import argparse
 import boto3
 from botocore.exceptions import NoCredentialsError, PartialCredentialsError
+import requests
+import xml.etree.ElementTree as ET
 
 
 pd.set_option('display.max_columns', None)
@@ -28,7 +30,7 @@ sparse = args.lower
 busy = args.upper
 span = args.range
 
-# keeping this in case I have to name zones by callsign
+# mapping zone numbers to continent-zone pairs
 zone_name_map = {
     1: 'NA-1', 2: 'NA-2', 3: 'NA-3', 4: 'NA-4', 5: 'NA-5',
     6: 'NA-6', 7: 'NA-7', 8: 'NA-8', 9: 'SA-9', 10: 'SA-10',
@@ -156,13 +158,13 @@ def run(access_key, secret_key, s3_buck):
     now = datetime.utcnow().strftime("%b %d, %Y %H:%M:%S")
     caption_string = "Conditions at " + spotter + " as of " + now + " GMT"
 
-    # Apply the styles to the dataframes
+    # apply the styles to the dataframes
     styled_table1 = count_table.style.apply(lambda x: color_table1, axis=None).set_caption(caption_string)
 
     styled_table1.set_properties(subset=['Zone'], **{'font-weight': 'bold'})
     styled_table1.set_properties(**{'text-align': 'center'})
 
-    # Apply larger font sizes to the first column and header row
+    # set table styles to different parts of the table
     styled_table1.set_table_styles([
         {'selector': 'caption', 'props': [('font-size', '13pt'), ('font-weight', 'bold')]},
         {'selector': 'th',
@@ -173,18 +175,18 @@ def run(access_key, secret_key, s3_buck):
          'props': [('font-size', '10pt'), ('padding-left', 'calc(5px + 1vw)'), ('padding-top', '4px'), ('padding-bottom', '4px'), ('padding-right', 'calc(5px + 1vw)')]}
     ])
 
-    # Convert the styled table to HTML
+    # convert the styled table to HTML
     html1 = styled_table1.hide(axis="index").to_html()
 
     html1 = html1.replace('<table ',
                           '<table style="width: 60vw; table-layout: fixed; margin-left: auto; margin-right: auto;" ')
     html1 = html1.replace('<thead>',
-                          '<thead><colgroup><col style="width: 117px;"></colgroup>')
+                          '<thead><colgroup><col style="width: 118px;"></colgroup>')
 
     # legend HTML
     legend_html = f"""
      <head> <meta http-equiv="refresh" content="60"> </head> 
-     <div style="position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 90%; background-color: rgba(255, 255, 255, 0.75); padding: 10px; border: 1px solid gray; box-sizing: border-box; z-index: 1000;">
+     <div style="position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 90%; background-color: rgba(255, 255, 255, 0.75); font-weight: bold; padding: 10px; border: 1px solid gray; box-sizing: border-box; z-index: 1000;">
          <div style="display: flex; justify-content: space-around; margin-bottom: 10px;">
              <div style="display: flex; align-items: center; margin-right: 20px; font-size: 12pt;">
                  <div style="width: 20px; height: 20px; background-color: #a3cce9; margin-right: 5px;"></div>
@@ -219,17 +221,123 @@ def run(access_key, secret_key, s3_buck):
          </div>
      </div>
      """
+
+    # fetch solar widget XML data
+    solar_response = requests.get("https://www.hamqsl.com/solarxml.php")
+    xml_data = solar_response.content
+    root = ET.fromstring(xml_data)
+
+    # extract relevant data
+    solar_data = {
+        "SFI": root.findtext("solardata/solarflux"),
+        "Sunspots": root.findtext("solardata/sunspots"),
+        "Updated": root.findtext("solardata/updated"),
+        "A-Index": root.findtext("solardata/aindex"),
+        "K-Index": root.findtext("solardata/kindex"),
+        "X-Ray": root.findtext("solardata/xray"),
+        "Signal Noise": root.findtext("solardata/signalnoise"),
+    }
+
+    # extract and organize conditions for each band, day, and night
+    conditions = {
+        "80m-40m": {"Day": "", "Night": ""},
+        "30m-20m": {"Day": "", "Night": ""},
+        "17m-15m": {"Day": "", "Night": ""},
+        "12m-10m": {"Day": "", "Night": ""},
+    }
+
+    # fill in the day and night conditions for each band
+    for band in root.findall("solardata/calculatedconditions/band"):
+        band_name = band.get("name")
+        time = band.get("time")
+        condition = band.text
+        if band_name in conditions:
+            conditions[band_name][time.capitalize()] = condition
+
+    # create the HTML table
+    solar_table_html = """
+    <div style="width: 100%; text-align: center; font-weight: bold; margin-bottom: 10px;">Solar-Terrestrial Data</div>
+    <hr>
+    <div style="text-align: center; margin-bottom: 10px; font-weight: bold;">
+        {Updated}
+    </div>
+    <div style="display: flex; justify-content: center; margin-bottom: 5px;">
+        <div style="margin-right: 20px;">
+            <span style="font-weight: bold;">SFI:</span> <span style="font-weight: bold;">{SFI}</span>
+        </div>
+        <div>
+            <span style="font-weight: bold;">SN:</span> <span style="font-weight: bold;">{Sunspots}</span>
+        </div>
+    </div>
+    <div style="display: flex; justify-content: center; margin-bottom: 5px;">
+        <div style="margin-right: 20px;">
+            <span style="font-weight: bold;">A-Index:</span> <span style="font-weight: bold;">{A-Index}</span>
+        </div>
+        <div>
+            <span style="font-weight: bold;">K-Index:</span> <span style="font-weight: bold;">{K-Index}</span>
+        </div>
+    </div>
+    <div style="text-align: center; margin-bottom: 10px;">
+        <span style="font-weight: bold;">X-Ray:</span> <span style="font-weight: bold;">{X-Ray}</span>
+    </div>
+    <hr>
+    <div style="width: 100%; text-align: center; font-weight: bold; margin-bottom: 10px;">Calculated Conditions</div>
+    <table style="width: 60%; margin: 0 auto; border-collapse: collapse;">
+        <thead>
+            <tr">
+                <th style="padding: 5px; text-align: center; font-weight: bold;">Band</th>
+                <th style="padding: 5px; text-align: center; font-weight: bold;">Day</th>
+                <th style="padding: 5px; text-align: center; font-weight: bold;">Night</th>
+            </tr>
+        </thead>
+        <tbody>
+    """
+
+    # Add the conditions for each band with color coding
+    for band, condition in conditions.items():
+        day_condition = condition.get("Day", "N/A")
+        night_condition = condition.get("Night", "N/A")
+        day_color = "green" if day_condition == "Good" else "red"
+        night_color = "green" if night_condition == "Good" else "red"
+
+        solar_table_html += f"""
+        <tr>
+            <td style="padding: 5px; text-align: center; font-weight: bold;">{band}</td>
+            <td style="padding: 5px; text-align: center; font-weight: bold; color: {day_color};">{day_condition}</td>
+            <td style="padding: 5px; text-align: center; font-weight: bold; color: {night_color};">{night_condition}</td>
+        </tr>
+        """
+
+    # Close the table
+    solar_table_html += """
+        </tbody>
+    </table>
+    <div style="margin-top: 5px; text-align: center">
+            <span style="font-weight: bold;">Signal Noise:</span> <span style="font-weight: bold;">{Signal Noise}</span>
+        </div>
     
-    # HTML for the solar widget
-    solar_widget_html = """
-    <div style="position: fixed; left: 0; top: 0; padding: 10px; z-index: 1000;">
-        <a href="https://www.hamqsl.com/solar.html" title="Click to add Solar-Terrestrial Data to your website!">
-            <img src="https://www.hamqsl.com/solar100sc.php">
-        </a>
+    """
+
+    # Insert the solar data values into the HTML template
+    solar_table_html = solar_table_html.format(**solar_data)
+
+    # Wrap the table in a fixed div
+    solar_table_html = f"""
+    <div style="position: fixed; left: 5%; top: 0px; padding: 10px; z-index: 1000; font-family: 'Roboto', monospace;">
+        {solar_table_html}
     </div>
     """
 
-    # final HTML with scrollable table, solar widget, and no vertical scrollbar
+    # HTML for the solar widget
+    # solar_widget_html = """
+    # <div style="position: fixed; left: 0; top: 0; padding: 10px; z-index: 1000;">
+    #     <a href="https://www.hamqsl.com/solar.html" title="Click to add Solar-Terrestrial Data to your website!">
+    #         <img src="https://www.hamqsl.com/solar100sc.php">
+    #     </a>
+    # </div>
+    # """
+
+    # Final HTML
     final_html = f"""
     <style>
         body {{
@@ -242,9 +350,9 @@ def run(access_key, secret_key, s3_buck):
         }}
     </style>
     <div style="display: flex; width: 100%; height: 100%;">
-        {solar_widget_html}
-        <div style="position: relative; flex-grow: 1; padding-left: 100px; overflow-y: auto;"> <!-- Added padding to accommodate the widget -->
-            <div style="max-height: 80vh; overflow-y: auto; padding-bottom: 10%;"> <!-- This div creates the scrollable area -->
+        {solar_table_html}
+        <div style="position: relative; flex-grow: 1; padding-left: 110px; overflow-y: auto; font-family: 'Roboto', monospace;"> <!-- Added padding to accommodate the table -->
+            <div style="max-height: 80vh; overflow-y: auto; padding-top: 0.75%; padding-bottom: 10%;"> <!-- This div creates the scrollable area -->
                 {html1}
             </div>
             <div>{legend_html}</div>
