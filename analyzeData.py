@@ -337,7 +337,7 @@ def run(access_key, secret_key, s3_buck):
     # </div>
     # """
 
-    # Final HTML file
+    # Final HTML
     final_html = f"""
     <style>
         body {{
