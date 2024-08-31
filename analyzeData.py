@@ -323,8 +323,18 @@ def run(access_key, secret_key, s3_buck):
     for band, condition in conditions.items():
         day_condition = condition.get("Day", "N/A")
         night_condition = condition.get("Night", "N/A")
-        day_color = "green" if day_condition == "Good" else "red"
-        night_color = "green" if night_condition == "Good" else "red"
+        if day_condition == "Good":
+            day_color = "green"
+        elif day_condition == "Fair":
+            day_color = "orange"
+        else:
+            day_color = "red"
+        if night_condition == "Good":
+            night_color = "green"
+        elif night_condition == "Fair":
+            night_color = "orange"
+        else:
+            night_color = "red"
 
         solar_table_html += f"""
         <tr>
@@ -348,7 +358,7 @@ def run(access_key, secret_key, s3_buck):
 
     # Wrap the table in a fixed div
     solar_table_html = f"""
-    <div style="position: fixed; left: 5%; top: 0px; padding: 10px; z-index: 1000; font-family: 'Roboto', monospace;">
+    <div style="position: fixed; left: 5%; padding-top: 0.75%; padding: 10px; z-index: 1000; font-family: 'Roboto', monospace;">
         {solar_table_html}
     </div>
     """
@@ -376,7 +386,7 @@ def run(access_key, secret_key, s3_buck):
     </style>
     <div style="display: flex; width: 100%; height: 100%;">
         {solar_table_html}
-        <div style="position: relative; flex-grow: 1; padding-left: 110px; overflow-y: auto; font-family: 'Roboto', monospace;"> <!-- Added padding to accommodate the table -->
+        <div style="position: relative; flex-grow: 1; padding-left: 160px; overflow-y: auto; font-family: 'Roboto', monospace;"> <!-- Added padding to accommodate the table -->
             <div style="max-height: 80vh; overflow-y: auto; padding-top: 0.75%; padding-bottom: 10%;"> <!-- This div creates the scrollable area -->
                 {html1}
             </div>

@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="28dd482c-a93d-49e3-b0e6-09d9777c16ac" name="Changes" comment="re-committing">
+    <list default="true" id="28dd482c-a93d-49e3-b0e6-09d9777c16ac" name="Changes" comment="changed zone indexes back to numbers and added span titles with descriptions to them. changed solar table too.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/analyzeData.py" beforeDir="false" afterPath="$PROJECT_DIR$/analyzeData.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/callsigns.csv" beforeDir="false" afterPath="$PROJECT_DIR$/callsigns.csv" afterDir="false" />
@@ -432,7 +432,15 @@
       <option name="project" value="LOCAL" />
       <updated>1724979978412</updated>
     </task>
-    <option name="localTasksCounter" value="39" />
+    <task id="LOCAL-00039" summary="changed zone indexes back to numbers and added span titles with descriptions to them. changed solar table too.">
+      <option name="closed" value="true" />
+      <created>1724984584403</created>
+      <option name="number" value="00039" />
+      <option name="presentableId" value="LOCAL-00039" />
+      <option name="project" value="LOCAL" />
+      <updated>1724984584403</updated>
+    </task>
+    <option name="localTasksCounter" value="40" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -447,7 +455,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="replaced dictionary with pandas DataFrame" />
     <MESSAGE value="script now runs infinitely. writes all enhanced data to csv file, deletes data older than a day. using DataFrame to store data" />
     <MESSAGE value="made dataframe global and made writing to csv occur every 100 iterations to prevent write lagging behind read" />
     <MESSAGE value="small tweaks" />
@@ -472,6 +479,7 @@
     <MESSAGE value="made changes to webpage. added continent names to zone numbers too." />
     <MESSAGE value="removed widget and implemented table from scratch (using info from same source). Changed font. made other slight changes" />
     <MESSAGE value="re-committing" />
-    <option name="LAST_COMMIT_MESSAGE" value="re-committing" />
+    <MESSAGE value="changed zone indexes back to numbers and added span titles with descriptions to them. changed solar table too." />
+    <option name="LAST_COMMIT_MESSAGE" value="changed zone indexes back to numbers and added span titles with descriptions to them. changed solar table too." />
   </component>
 </project>
