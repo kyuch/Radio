@@ -1,4 +1,5 @@
 import time
+import datetime as dt
 from datetime import datetime, timedelta
 import pandas as pd
 import argparse
@@ -185,7 +186,7 @@ def run(access_key, secret_key, s3_buck):
     count_table['Zone'] = mean_table['Zone']
     count_table[' '] = mean_table[' ']
 
-    now = datetime.utcnow().strftime("%b %d, %Y %H:%M:%S")
+    now = dt.datetime.now(dt.timezone.utc).strftime("%b %d, %Y %H:%M:%S")
     caption_string = "Conditions at " + spotter + " as of " + now + " GMT"
 
     # apply the styles to the dataframes

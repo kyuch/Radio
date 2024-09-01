@@ -1,11 +1,10 @@
 import re
-import telnetlib
+import socket
 import plistlib
 from datetime import datetime, timedelta
 import pandas as pd
 import argparse
 import boto3
-
 
 client = boto3.client('s3')
 
@@ -79,34 +78,32 @@ def run():
     with open(cty_file, 'rb') as infile:
         cty_list = plistlib.load(infile, dict_type=dict)
 
-    tn = telnetlib.Telnet(host, port)
-    tn.read_until(b'login: ')
-    tn.write(login.encode() + b'\n')
-    tn.write(b'SET/SKIMMER\nSET/NOCW\nSET/NORTTY\n')
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect((host, port))
 
-    data = tn.read_until(b'DX')
-    tn.write(b'SET/FT4\nSET/FT8\n')
+    s.sendall(f"{login}\n".encode())
+    s.sendall(b'SET/SKIMMER\nSET/NOCW\nSET/NORTTY\n')
+
     n = 0
     while True:
-        data = tn.read_until(b'\n')
-
-        try:  # I received a one-time UnicodeDecodeError when decoding -- never reoccurred. Added this preventatively.
-            data = data.decode()
-        except UnicodeDecodeError:
+        try:
+            data = s.recv(1024).decode()
+        except UnicodeDecodeError as e:
+            print(e)
             print(data)
-            continue
+
+        if not data:
+            break  # Handle the case where the connection is closed
 
         spotter_string = spotter + "-#:"
         if ("FT8" or "FT4") and spotter_string in data:
-            # print(data)
             time = datetime.now().timestamp()
             match = re.search(pattern, data)
             frequency = match.group(1) if match else None
             call_sign = match.group(2) if match else None
             snr = match.group(3).replace(" ", "") if match else None
-            # print(data)
 
-            if match:  # when there's no match, the line of data is usually not usable, so I don't store it
+            if match:
                 continent, country, cq_zone = search_list(call_sign, cty_list)
                 band = calculate_band(float(frequency))
                 if band:
@@ -117,9 +114,9 @@ def run():
             else:
                 print(data)
 
-        if n > 0 and n % 100 == 0 and not callsign_df.empty:  # output data every 100 iters to prevent lagging behind
+        if n > 0 and n % 100 == 0 and not callsign_df.empty:
             callsign_df = delete_old(callsign_df)
-            callsign_df.to_csv(csv_file, index=False)  # writing dataframe minus old entries every iteration.
+            callsign_df.to_csv(csv_file, index=False)
             print("iteration ", n)
         if n == 100000:
             n = 100
