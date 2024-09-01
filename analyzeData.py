@@ -1,3 +1,12 @@
+"""
+   analyzeData.py collects callsign info from a csv file, analyzes the data into a pivot table, 
+   generates an HTML page with the table, and uploads it to an AWS S3 bucket.
+
+   To run, pip install pandas, boto3, jinja2, requests.
+   Author: Alex Kyuchukov
+""" 
+
+
 import time
 import datetime as dt
 from datetime import datetime, timedelta
@@ -14,7 +23,7 @@ pd.set_option('display.max_rows', None)
 pd.set_option('display.width', 2000)
 csv_file = 'callsigns.csv'
 
-parser = argparse.ArgumentParser()
+parser = argparse.ArgumentParser()  # argument parser
 parser.add_argument("-f", "--frequency", help="Specify how often data is collected (in minutes). Default = 1",
                     type=float, default=1)
 parser.add_argument("-l", "--lower",
@@ -77,9 +86,9 @@ zone_name_map = {
 
 def get_aws_credentials():
     """
-    Prompts the user to input their AWS credentials.
+    Prompts the user to input their AWS credentials and the bucket they'd like to upload to.
 
-    :return: A dictionary containing 'aws_access_key_id' and 'aws_secret_access_key'
+    :return: A dictionary containing 'aws_access_key_id', 'aws_secret_access_key', and 's3_bucket'.
     """
     access_key = input("Enter your AWS Access Key ID: ")
     secret_key = input("Enter your AWS Secret Access Key: ")
@@ -93,6 +102,15 @@ def get_aws_credentials():
 
 
 def upload_file_to_s3(file_name, bucket_name, acc_key, sec_key):
+    """
+    Uploads the html file to the AWS S3 bucket.
+
+    :param file_name: The name of the html file being uploaded.
+    :param bucket_name: The name of the bucket being uploaded to.
+    :param acc_key: The AWS access key for S3 access.
+    :param sec_key: The secret access key for the AWS access key.
+    :return: Boolean True if the file was uploaded successfully. False if not uploaded successfully.
+    """ 
     creds = {
         'aws_access_key_id': acc_key,
         'aws_secret_access_key': sec_key
@@ -112,11 +130,16 @@ def upload_file_to_s3(file_name, bucket_name, acc_key, sec_key):
         print("Incomplete credentials provided")
     except Exception as e:
         print(f"An error occurred: {e}")
-
-    return False
+    quit(1)
 
 
 def reformat_table(table):
+    """
+    Reformats our pivot table into a dataframe convenient for HTML display.
+
+    :param table: The pivot table being reformatted.
+    :return: A dataframe reformatted from the pivot table.
+    """ 
     flattened = pd.DataFrame(table.to_records())
     flattened['Zone'] = flattened['Zone'].apply(lambda x: f'<span title="{zone_name_map.get(x, "")}">{str(x).zfill(2)}</span>')
     flattened.reset_index(drop=True)
@@ -128,14 +151,26 @@ def reformat_table(table):
     return flattened1
 
 
-def delete_old(df):  # delete entries older than the range from the dataframe
+def delete_old(df):
+    """
+    Deletes entries older than the range from the dataframe.
+
+    :param df: The dataframe being modified.
+    :return: The dataframe without the older entries.
+    """ 
     day_ago = datetime.now().timestamp() - timedelta(hours=span).total_seconds()
-    print(df[df['Timestamp'] <= day_ago].index)
+    # print(df[df['Timestamp'] <= day_ago].index)
     df = df.drop(df[df['Timestamp'] <= day_ago].index)
     return df
 
 
 def replace_values(df):
+    """
+    Replaces numbers in the dataframe with symbols, replaces NaN with an empty space.
+
+    :param df: The dataframe being modified.
+    :return: A dataframe with modified entries.
+    """ 
     df = df.fillna(0)
 
     def replace_value(x):
@@ -154,18 +189,18 @@ def replace_values(df):
 
 
 def run(access_key, secret_key, s3_buck):
-    df = pd.read_csv(csv_file, keep_default_na=False)
+    df = pd.read_csv(csv_file, keep_default_na=False)  # read from the callsign CSV file.
     spotter = df['Spotter'].iloc[0]
-    df = delete_old(df)  # ignores any data older than range from the csv.
-    count_table = df.pivot_table(values='SNR', index=['Zone'], columns=['Band'], aggfunc='count')
+    df = delete_old(df)  # ignore any data older than range from the csv.
+    count_table = df.pivot_table(values='SNR', index=['Zone'], columns=['Band'], aggfunc='count')  # pivot based on Zones and Bands with SNR being the value.
     count_table = count_table.fillna(0)
     count_table = count_table.astype(int)
     count_table = reformat_table(count_table)
 
-    mean_table = df.pivot_table(values='SNR', index=['Zone'], columns=['Band'], aggfunc='mean')
+    mean_table = df.pivot_table(values='SNR', index=['Zone'], columns=['Band'], aggfunc='mean')  # turn dataframe into pivot table.
     mean_table = reformat_table(mean_table)
 
-    def apply_color(val):
+    def apply_color(val):  # colors cells based on if the Zone/Bands are Hot or Marginal.
         if pd.isna(val):
             return 'background-color: #f0f0f0'
         elif val <= -15:
@@ -177,25 +212,25 @@ def run(access_key, secret_key, s3_buck):
         else:
             return 'background-color: #e57373'
 
-    # apply color map to numeric columns only
+    # apply color map to numeric columns only.
     means_no_zone = mean_table.drop(columns=['Zone', ' '])
     color_table1 = means_no_zone.map(apply_color)
 
     count_table = replace_values(count_table)
-    # add the 'Zone' column back without applying the color map to it
+    # add the 'Zone' column back without applying the color map to it.
     count_table['Zone'] = mean_table['Zone']
     count_table[' '] = mean_table[' ']
 
     now = dt.datetime.now(dt.timezone.utc).strftime("%b %d, %Y %H:%M:%S")
-    caption_string = "Conditions at " + spotter + " as of " + now + " GMT"
+    caption_string = "Conditions at " + spotter + " as of " + now + " GMT"  # table caption
 
-    # apply the styles to the dataframes
+    # apply the styles to the dataframes.
     styled_table1 = count_table.style.apply(lambda x: color_table1, axis=None).set_caption(caption_string)
 
     styled_table1.set_properties(subset=['Zone'], **{'font-weight': 'bold'})
     styled_table1.set_properties(**{'text-align': 'center'})
 
-    # set table styles to different parts of the table
+    # set table styles to different parts of the table.
     styled_table1.set_table_styles([
         {'selector': 'caption', 'props': [('font-size', '13pt'), ('font-weight', 'bold')]},
         {'selector': 'th',
@@ -206,7 +241,7 @@ def run(access_key, secret_key, s3_buck):
          'props': [('font-size', '10pt'), ('padding-left', 'calc(5px + 1vw)'), ('padding-top', '4px'), ('padding-bottom', '4px'), ('padding-right', 'calc(5px + 1vw)')]}
     ])
 
-    # convert the styled table to HTML
+    # convert the styled table to HTML.
     html1 = styled_table1.hide(axis="index").to_html()
 
     html1 = html1.replace('<table ',
@@ -214,7 +249,7 @@ def run(access_key, secret_key, s3_buck):
     # html1 = html1.replace('<thead>',
     #                       '<thead><colgroup><col style="width: 118px;"></colgroup>')
 
-    # legend HTML
+    # legend HTML block.
     legend_html = f"""
      <head> <meta http-equiv="refresh" content="60"> </head> 
      <div style="position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 90%; background-color: rgba(255, 255, 255, 0.75); font-weight: bold; padding: 10px; border: 1px solid gray; box-sizing: border-box; z-index: 1000;">
@@ -253,12 +288,12 @@ def run(access_key, secret_key, s3_buck):
      </div>
      """
 
-    # fetch solar widget XML data
+    # fetch solar widget XML data.
     solar_response = requests.get("https://www.hamqsl.com/solarxml.php")
     xml_data = solar_response.content
     root = ET.fromstring(xml_data)
 
-    # extract relevant data
+    # extract relevant data from XML.
     solar_data = {
         "SFI": root.findtext("solardata/solarflux"),
         "Sunspots": root.findtext("solardata/sunspots"),
@@ -268,7 +303,7 @@ def run(access_key, secret_key, s3_buck):
         "Signal Noise": root.findtext("solardata/signalnoise"),
     }
 
-    # extract and organize conditions for each band, day, and night
+    # extract and organize conditions for each band, day, and night.
     conditions = {
         "80m-40m": {"Day": "", "Night": ""},
         "30m-20m": {"Day": "", "Night": ""},
@@ -276,7 +311,7 @@ def run(access_key, secret_key, s3_buck):
         "12m-10m": {"Day": "", "Night": ""},
     }
 
-    # fill in the day and night conditions for each band
+    # fill in the day and night conditions for each band.
     for band in root.findall("solardata/calculatedconditions/band"):
         band_name = band.get("name")
         time = band.get("time")
@@ -284,7 +319,7 @@ def run(access_key, secret_key, s3_buck):
         if band_name in conditions:
             conditions[band_name][time.capitalize()] = condition
 
-    # Create the HTML table
+    # HTML block for the solar terrestrial data table.
     solar_table_html = """
     <div style="width: 100%; text-align: center; font-weight: bold; margin-bottom: 5px;">Solar-Terrestrial Data</div>
     <hr>
@@ -320,7 +355,7 @@ def run(access_key, secret_key, s3_buck):
         <tbody>
     """
 
-    # Add the conditions for each band with color coding
+    # add the conditions for each band with color coding.
     for band, condition in conditions.items():
         day_condition = condition.get("Day", "N/A")
         night_condition = condition.get("Night", "N/A")
@@ -345,7 +380,7 @@ def run(access_key, secret_key, s3_buck):
         </tr>
         """
 
-    # Close the table
+    # close the table.
     solar_table_html += """
         </tbody>
     </table>
@@ -354,26 +389,18 @@ def run(access_key, secret_key, s3_buck):
         </div>
     """
 
-    # Insert the solar data values into the HTML template
+    # Insert the solar data values into the HTML template.
     solar_table_html = solar_table_html.format(**solar_data)
 
-    # Wrap the table in a fixed div
+    # wrap the table in a fixed div.
     solar_table_html = f"""
     <div style="position: fixed; left: 5%; padding-top: 0.75%; padding: 10px; z-index: 1000; font-family: 'Roboto', monospace;">
         {solar_table_html}
     </div>
     """
 
-    # HTML for the solar widget
-    # solar_widget_html = """
-    # <div style="position: fixed; left: 0; top: 0; padding: 10px; z-index: 1000;">
-    #     <a href="https://www.hamqsl.com/solar.html" title="Click to add Solar-Terrestrial Data to your website!">
-    #         <img src="https://www.hamqsl.com/solar100sc.php">
-    #     </a>
-    # </div>
-    # """
 
-    # Final HTML
+    # Final HTML block with solar table, main table, and legend html blocks all together.
     final_html = f"""
     <style>
         body {{
@@ -396,23 +423,20 @@ def run(access_key, secret_key, s3_buck):
     </div>
     """
 
-    with open("index.html", "w", encoding="utf-8") as text_file:
+    with open("index.html", "w", encoding="utf-8") as text_file:  # write HTML data to index.html file.
         text_file.write(final_html)
-
-    with open("index.html", "w", encoding="utf-8") as text_file:
-        text_file.write(final_html)
-
     print("Table updated in index.html at " + now)
-    upload_file_to_s3("index.html", s3_buck, access_key, secret_key)
+    
+    upload_file_to_s3("index.html", s3_buck, access_key, secret_key)  # upload index.html to S3 bucket
 
 
 if __name__ == '__main__':
-    time_to_wait = frequency * 60
+    time_to_wait = frequency * 60  # time to wait in between re-running program
     credentials = get_aws_credentials()
     aws_access_key = credentials['aws_access_key_id']
     secret_access_key = credentials['aws_secret_access_key']
     s3_bucket = credentials['s3_bucket']
 
-    while True:
+    while True:  # run program every 'n' minutes, which will re-analyze data and upload a new index.html to the S3 bucket.
         run(aws_access_key, secret_access_key, s3_bucket)
         time.sleep(time_to_wait)
