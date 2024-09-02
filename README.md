@@ -11,3 +11,5 @@ pip install pandas 
 pip install boto3 
 
 pip install jinja2 
+
+pip install requests
