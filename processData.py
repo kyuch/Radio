@@ -17,7 +17,7 @@ import boto3
 
 client = boto3.client('s3')
 
-pattern = r'(\d+\.\d{2})\s+([A-Z0-9/]+)\s+(?:FT8|FT4)\s+([+-]\s?\d{1,2})'  # regex for filtering for desired lines from data stream
+pattern = r'(\d+\.\d{2})\s+([A-Z0-9/]+)\s+(?:FT8|FT4|CW)\s+([+-]?\s?\d{1,2})\s*dB' # regex for filtering for desired lines from data stream
 cty_file = "cty.plist"
 pd.options.display.float_format = '{:.0f}'.format
 csv_file = 'callsigns.csv'
@@ -110,39 +110,55 @@ def run():
     s.connect((host, port))  # connect to the DX cluster
 
     s.sendall(f"{login}\n".encode())
-    s.sendall(b'SET/SKIMMER\nSET/NOCW\nSET/NORTTY\n')
+    s.sendall(b'SET/SKIMMER\nSET/NORTTY\nSET/FT4\nSET/FT8\nSET/CW\n')
 
+    buffer = ""  # initialize buffer for incoming data
     n = 0
     while True:  # continue reading from DX cluster
         try:
-            data = s.recv(1024).decode()  # read a line from the cluster
-        except UnicodeDecodeError as e:  # if for some reason a line can't be decoded with utf-8, just skip thru it.
+            data = s.recv(1024).decode()  # receive data from the cluster
+            buffer += data  # add the new data to the buffer
+        except UnicodeDecodeError as e:  # handle decoding errors
             print(e)
-            print(data)
+            continue
 
         if not data:
             break  # handle the case where the connection is closed
 
-        spotter_string = spotter + "-#:"
-        if ("FT8" or "FT4") and spotter_string in data:  # ensure that we are reading data from our spotter.
-            time = datetime.now().timestamp()  # collect timestamp of data
-            match = re.search(pattern, data)  # use regex to ensure  formatting of data is readable
-            frequency = match.group(1) if match else None
-            call_sign = match.group(2) if match else None
-            snr = match.group(3).replace(" ", "") if match else None
+        # split the buffer by lines. the last item in the list might be incomplete.
+        lines = buffer.split('\n')
+        buffer = lines[-1]  # save the incomplete line back to the buffer
 
-            if match:
-                continent, country, cq_zone = search_list(call_sign, cty_list)  # search the cty_list for enhanced callsign data
-                band = calculate_band(float(frequency))
-                if band:  # add enhanced callsign info to dataframe
-                    temp_df = pd.DataFrame(  
-                        [{'Call Sign': call_sign, 'Continent': continent, 'Country': country, 'Zone': cq_zone,
-                          'Frequency': frequency, 'Band': band, 'SNR': snr, 'Timestamp': time, 'Spotter': spotter}])
-                    callsign_df = pd.concat([callsign_df, temp_df], ignore_index=True)
-            else:
-                print(data)
+        for line in lines[:-1]:  # process all complete lines
+            spotter_string = spotter + "-#:"
+            if ((" CW " in line) or (" FT4 " in line) or (" FT8 " in line)) and spotter_string in line:  # ensure that we are reading from our spotter
+                # and spotter_string in line:
+                time = datetime.now().timestamp()  # collect timestamp of data
 
-        if n > 0 and n % 100 == 0 and not callsign_df.empty:  # overwrite csv file with new info every 100 lines read. 
+                match = re.search(pattern, line)  # use FT8/FT4/CW regex to check if readable
+
+                if match:
+                    if " CW " in line:
+                        cw_bool = 1
+                        # print(line)
+                    else:
+                        cw_bool = 0
+
+                    frequency = match.group(1)
+                    call_sign = match.group(2)
+                    snr = match.group(3).replace(" ", "")
+                    continent, country, cq_zone = search_list(call_sign, cty_list)  # search the cty_list for callsign data
+                    band = calculate_band(float(frequency))
+
+                    if band:  # add enhanced callsign info to dataframe
+                        temp_df = pd.DataFrame(
+                            [{'Call Sign': call_sign, 'Continent': continent, 'Country': country, 'Zone': cq_zone,
+                              'Frequency': frequency, 'Band': band, 'SNR': snr, 'Timestamp': time, 'Spotter': spotter, 'CW': cw_bool}])
+                        callsign_df = pd.concat([callsign_df, temp_df], ignore_index=True)
+                else:
+                    print("no match: " + line)
+
+        if n > 0 and n % 100 == 0 and not callsign_df.empty:  # overwrite csv file with new info every 100 lines read.
             callsign_df = delete_old(callsign_df)  # delete old info from dataframe. This keeps info current and csv file size small.
             callsign_df.to_csv(csv_file, index=False)  # convert dataframe to csv file.
             print(csv_file + " updated.")

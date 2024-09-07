@@ -32,8 +32,8 @@ parser.add_argument("-l", "--lower",
 parser.add_argument("-u", "--upper",
                     help="Specify the upper end of the data count threshold (filled square). Default = 10",
                     type=int, default=10)
-parser.add_argument("-r", "--range", type=int, default=3,
-                    help="Specify # of hours of data from current time to analyze. Default = 3")
+parser.add_argument("-r", "--range", type=int, default=0.25,
+                    help="Specify # of hours of data from current time to analyze. Default = 0.25")
 args = parser.parse_args()
 frequency = args.frequency
 sparse = args.lower
@@ -151,14 +151,15 @@ def reformat_table(table):
     return flattened1
 
 
-def delete_old(df):
+def delete_old(df, time):
     """
     Deletes entries older than the range from the dataframe.
 
     :param df: The dataframe being modified.
+    :param time: The range of age before deletion
     :return: The dataframe without the older entries.
     """ 
-    day_ago = datetime.now().timestamp() - timedelta(hours=span).total_seconds()
+    day_ago = datetime.now().timestamp() - timedelta(hours=time).total_seconds()
     # print(df[df['Timestamp'] <= day_ago].index)
     df = df.drop(df[df['Timestamp'] <= day_ago].index)
     return df
@@ -170,7 +171,7 @@ def replace_values(df):
 
     :param df: The dataframe being modified.
     :return: A dataframe with modified entries.
-    """ 
+    """
     df = df.fillna(0)
 
     def replace_value(x):
@@ -188,17 +189,50 @@ def replace_values(df):
     return df.map(replace_value)
 
 
+def update_count_table(count_df, cw_df):
+    """
+    Updates the count dataframe by appending a '+' wherever the CW table has a value >= 1.
+
+    :param count_df: The dataframe containing counts (SNR).
+    :param cw_df: The dataframe containing CW counts.
+    :return: Modified count_df with '+' added where necessary.
+    """
+    count_df = count_df.fillna(0)  # fill NaNs with 0 for consistency in count_df
+    cw_df = cw_df.fillna(0)  # fill NaNs with 0 in cw_df as well
+
+    for col in count_df.columns:
+        if col in cw_df.columns:  # make sure the columns match
+            for i in range(len(count_df)):
+                try:
+                    if cw_df[col].iloc[i] >= 1:  # check if CW table has 1 or more
+                        count_df.loc[i, col] = f"{count_df.loc[i, col]}+"  # append '+' in count table
+                finally:
+                    continue
+
+    return count_df
+
+
 def run(access_key, secret_key, s3_buck):
     df = pd.read_csv(csv_file, keep_default_na=False)  # read from the callsign CSV file.
     spotter = df['Spotter'].iloc[0]
-    df = delete_old(df)  # ignore any data older than range from the csv.
+    df = delete_old(df, span)  # ignore any data older than range from the csv.
+
+    cw_table = df.pivot_table(values='CW', index=['Zone'], columns=['Band'], aggfunc='sum')  # count CW spots
+    cw_table = cw_table.fillna(0)
+    cw_table = cw_table.astype(int)
+    cw_table = reformat_table(cw_table)
+    # print(cw_table)
+
     count_table = df.pivot_table(values='SNR', index=['Zone'], columns=['Band'], aggfunc='count')  # pivot based on Zones and Bands with SNR being the value.
     count_table = count_table.fillna(0)
     count_table = count_table.astype(int)
     count_table = reformat_table(count_table)
+    # print(count_table)
 
     mean_table = df.pivot_table(values='SNR', index=['Zone'], columns=['Band'], aggfunc='mean')  # turn dataframe into pivot table.
     mean_table = reformat_table(mean_table)
+
+
 
     def apply_color(val):  # colors cells based on if the Zone/Bands are Hot or Marginal.
         if pd.isna(val):
@@ -217,6 +251,7 @@ def run(access_key, secret_key, s3_buck):
     color_table1 = means_no_zone.map(apply_color)
 
     count_table = replace_values(count_table)
+    count_table = update_count_table(count_table, cw_table)
     # add the 'Zone' column back without applying the color map to it.
     count_table['Zone'] = mean_table['Zone']
     count_table[' '] = mean_table[' ']

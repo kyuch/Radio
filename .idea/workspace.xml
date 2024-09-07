@@ -4,11 +4,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="28dd482c-a93d-49e3-b0e6-09d9777c16ac" name="Changes" comment="changed zone indexes back to numbers and added span titles with descriptions to them. changed solar table too.">
+    <list default="true" id="28dd482c-a93d-49e3-b0e6-09d9777c16ac" name="Changes" comment="adjusted condition colors and div spacing">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/analyzeData.py" beforeDir="false" afterPath="$PROJECT_DIR$/analyzeData.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/callsigns.csv" beforeDir="false" afterPath="$PROJECT_DIR$/callsigns.csv" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/processData.py" beforeDir="false" afterPath="$PROJECT_DIR$/processData.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -440,7 +441,15 @@
       <option name="project" value="LOCAL" />
       <updated>1724984584403</updated>
     </task>
-    <option name="localTasksCounter" value="40" />
+    <task id="LOCAL-00040" summary="adjusted condition colors and div spacing">
+      <option name="closed" value="true" />
+      <created>1725148367294</created>
+      <option name="number" value="00040" />
+      <option name="presentableId" value="LOCAL-00040" />
+      <option name="project" value="LOCAL" />
+      <updated>1725148367294</updated>
+    </task>
+    <option name="localTasksCounter" value="41" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -455,7 +464,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="script now runs infinitely. writes all enhanced data to csv file, deletes data older than a day. using DataFrame to store data" />
     <MESSAGE value="made dataframe global and made writing to csv occur every 100 iterations to prevent write lagging behind read" />
     <MESSAGE value="small tweaks" />
     <MESSAGE value="changed range from 1 day to 1 hour" />
@@ -480,6 +488,7 @@
     <MESSAGE value="removed widget and implemented table from scratch (using info from same source). Changed font. made other slight changes" />
     <MESSAGE value="re-committing" />
     <MESSAGE value="changed zone indexes back to numbers and added span titles with descriptions to them. changed solar table too." />
-    <option name="LAST_COMMIT_MESSAGE" value="changed zone indexes back to numbers and added span titles with descriptions to them. changed solar table too." />
+    <MESSAGE value="adjusted condition colors and div spacing" />
+    <option name="LAST_COMMIT_MESSAGE" value="adjusted condition colors and div spacing" />
   </component>
 </project>
