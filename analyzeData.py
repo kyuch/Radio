@@ -223,13 +223,15 @@ def run(access_key, secret_key, s3_buck):
     cw_table = reformat_table(cw_table)
     # print(cw_table)
 
+    filtered_df = df.loc[df['CW'] == 0]  # create df without CW zones for calculation purposes
+
     count_table = df.pivot_table(values='SNR', index=['Zone'], columns=['Band'], aggfunc='count')  # pivot based on Zones and Bands with SNR being the value.
     count_table = count_table.fillna(0)
     count_table = count_table.astype(int)
     count_table = reformat_table(count_table)
     # print(count_table)
 
-    mean_table = df.pivot_table(values='SNR', index=['Zone'], columns=['Band'], aggfunc='mean')  # turn dataframe into pivot table.
+    mean_table = filtered_df.pivot_table(values='SNR', index=['Zone'], columns=['Band'], aggfunc='mean')  # turn dataframe into pivot table.
     mean_table = reformat_table(mean_table)
 
 
