@@ -1,15 +1,13 @@
+For full functionality, run "pip install -r requirements.txt" in project directory. 
+
 Run processData.py in terminal: python3 processData.py 
 
 Run analyzeData.py in terminal: python3 analyzeData.py 
 
 Add "-h" to command to view arguments that can be set
 
-Python must be installed. Install the packages below for functionality:
+processData.py connects to a DX Cluster, collects all spotted callsigns from a provided spotter, 
+enhances the data for each spotted callsign, and uploads the enhanced data to a csv file.
 
-pip install pandas 
-
-pip install boto3 
-
-pip install jinja2 
-
-pip install requests
+analyzeData.py collects callsign info from a csv file, analyzes the data into a pivot table, 
+generates an HTML page with the table, and uploads it to an AWS S3 bucket.
