@@ -139,7 +139,7 @@ def reformat_table(table):
 
     :param table: The pivot table being reformatted.
     :return: A dataframe reformatted from the pivot table.
-    """ 
+    """
     flattened = pd.DataFrame(table.to_records())
     flattened['Zone'] = flattened['Zone'].apply(lambda x: f'<span title="{zone_name_map.get(x, "")}">{str(x).zfill(2)}</span>')
     flattened.reset_index(drop=True)
@@ -158,7 +158,7 @@ def delete_old(df, time):
     :param df: The dataframe being modified.
     :param time: The range of age before deletion
     :return: The dataframe without the older entries.
-    """ 
+    """
     day_ago = datetime.now().timestamp() - timedelta(hours=time).total_seconds()
     # print(df[df['Timestamp'] <= day_ago].index)
     df = df.drop(df[df['Timestamp'] <= day_ago].index)
@@ -217,13 +217,14 @@ def run(access_key, secret_key, s3_buck):
     spotter = df['Spotter'].iloc[0]
     df = delete_old(df, span)  # ignore any data older than range from the csv.
 
-    cw_table = df.pivot_table(values='CW', index=['Zone'], columns=['Band'], aggfunc='sum')  # count CW spots
-    cw_table = cw_table.fillna(0)
-    cw_table = cw_table.astype(int)
-    cw_table = reformat_table(cw_table)
+    # COMMENTING OUT FOR NOW -- NEED TO FIX BUG
+    # cw_table = df.pivot_table(values='CW', index=['Zone'], columns=['Band'], aggfunc='sum')  # count CW spots
+    # cw_table = cw_table.fillna(0)
+    # cw_table = cw_table.astype(int)
+    # cw_table = reformat_table(cw_table)
     # print(cw_table)
 
-    filtered_df = df.loc[df['CW'] == 0]  # create df without CW zones for calculation purposes
+    # filtered_df = df.loc[df['CW'] == 0]  # create df without CW zones for calculation purposes
 
     count_table = df.pivot_table(values='SNR', index=['Zone'], columns=['Band'], aggfunc='count')  # pivot based on Zones and Bands with SNR being the value.
     count_table = count_table.fillna(0)
@@ -231,7 +232,7 @@ def run(access_key, secret_key, s3_buck):
     count_table = reformat_table(count_table)
     # print(count_table)
 
-    mean_table = filtered_df.pivot_table(values='SNR', index=['Zone'], columns=['Band'], aggfunc='mean')  # turn dataframe into pivot table.
+    mean_table = df.pivot_table(values='SNR', index=['Zone'], columns=['Band'], aggfunc='mean')  # turn dataframe into pivot table.
     mean_table = reformat_table(mean_table)
 
 
@@ -253,7 +254,7 @@ def run(access_key, secret_key, s3_buck):
     color_table1 = means_no_zone.map(apply_color)
 
     count_table = replace_values(count_table)
-    count_table = update_count_table(count_table, cw_table)
+    # count_table = update_count_table(count_table, cw_table)
     # add the 'Zone' column back without applying the color map to it.
     count_table['Zone'] = mean_table['Zone']
     count_table[' '] = mean_table[' ']

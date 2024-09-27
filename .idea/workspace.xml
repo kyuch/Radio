@@ -4,11 +4,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="28dd482c-a93d-49e3-b0e6-09d9777c16ac" name="Changes" comment="added CW spots to data collection -- implemented &quot;+&quot; symbols in table to represent Band x Zones with CW spots">
+    <list default="true" id="28dd482c-a93d-49e3-b0e6-09d9777c16ac" name="Changes" comment="removed CW spots from avg calculations (kept the + stuff)">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/analyzeData.py" beforeDir="false" afterPath="$PROJECT_DIR$/analyzeData.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/callsigns.csv" beforeDir="false" afterPath="$PROJECT_DIR$/callsigns.csv" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/processData.py" beforeDir="false" afterPath="$PROJECT_DIR$/processData.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -57,6 +58,11 @@
     &quot;git-widget-placeholder&quot;: &quot;main&quot;
   }
 }</component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$" />
+    </key>
+  </component>
   <component name="RunManager" selected="Python.analyzeData">
     <configuration name="analyzeData" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="Radio" />
@@ -456,7 +462,15 @@
       <option name="project" value="LOCAL" />
       <updated>1725678608234</updated>
     </task>
-    <option name="localTasksCounter" value="42" />
+    <task id="LOCAL-00042" summary="removed CW spots from avg calculations (kept the + stuff)">
+      <option name="closed" value="true" />
+      <created>1725752631024</created>
+      <option name="number" value="00042" />
+      <option name="presentableId" value="LOCAL-00042" />
+      <option name="project" value="LOCAL" />
+      <updated>1725752631024</updated>
+    </task>
+    <option name="localTasksCounter" value="43" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -471,7 +485,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="small tweaks" />
     <MESSAGE value="changed range from 1 day to 1 hour" />
     <MESSAGE value="renamed main to processData.py and created analyzeData.py" />
     <MESSAGE value="csv to dataframe in analyzeData.py" />
@@ -496,6 +509,7 @@
     <MESSAGE value="changed zone indexes back to numbers and added span titles with descriptions to them. changed solar table too." />
     <MESSAGE value="adjusted condition colors and div spacing" />
     <MESSAGE value="added CW spots to data collection -- implemented &quot;+&quot; symbols in table to represent Band x Zones with CW spots" />
-    <option name="LAST_COMMIT_MESSAGE" value="added CW spots to data collection -- implemented &quot;+&quot; symbols in table to represent Band x Zones with CW spots" />
+    <MESSAGE value="removed CW spots from avg calculations (kept the + stuff)" />
+    <option name="LAST_COMMIT_MESSAGE" value="removed CW spots from avg calculations (kept the + stuff)" />
   </component>
 </project>

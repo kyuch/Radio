@@ -1,52 +1,34 @@
-"""
-   processData.py connects to a DX Cluster, collects all spotted callsigns from a provided spotter, 
-   enhances the data for each spotted callsign, and uploads the enhanced data to a csv file.
-
-   To run, pip install pandas, boto3.
-   Author: Alex Kyuchukov
-""" 
-
-
 import re
 import socket
 import plistlib
 from datetime import datetime, timedelta
 import pandas as pd
 import argparse
-import boto3
+import os
 
-client = boto3.client('s3')
 
-pattern = r'(\d+\.\d{2})\s+([A-Z0-9/]+)\s+(?:FT8|FT4|CW)\s+([+-]?\s?\d{1,2})\s*dB' # regex for filtering for desired lines from data stream
+# Regular expression pattern for filtering relevant lines from the DX Cluster data stream
+pattern = r'(\d+\.\d{1,2})\s+([A-Z0-9/]+)\s+([+-]?\s?\d{1,2})\s*dB\s+\d+\s+(?:FT8|FT4|CW)'
+
+# Default file names
 cty_file = "cty.plist"
-pd.options.display.float_format = '{:.0f}'.format
 csv_file = 'callsigns.csv'
 
+# Pandas display options
+pd.options.display.float_format = '{:.0f}'.format
+
+# Create an empty dataframe to store callsigns
 callsign_df = pd.DataFrame()
-
-parser = argparse.ArgumentParser()  # argument parser
-parser.add_argument("-a", "--address",
-                    help="Specify hostname/address. Default = cluster.n2wq.com", default="cluster.n2wq.com")
-parser.add_argument("-p", "--port", help="Specify port. Default = 7373", type=int, default=7373)
-parser.add_argument("-l", "--login", help="Specify login for cluster. Default = LZ3NY", default="LZ3NY")
-parser.add_argument("-s", "--spotter",
-                    help="Specify spotter name to track. Default = VE3EID", default="VE3EID")
-
-args = parser.parse_args()
-host = args.address
-port = args.port
-login = args.login
-spotter = args.spotter
 
 
 def search_list(call_sign, cty_list):
     """
-    search_list searches through the cty.plist file to find a match for the provided callsign and provide more info.
+    Search through the cty.plist file to find geographic information for the provided callsign.
 
-    :param call_sign: The radio callsign we are searching for
-    :param cty_list: The file containing our callsign information.
-    :return: The continent, country, and CQ zone of our callsign. Returns None if callsign not found.
-    """ 
+    :param call_sign: The radio callsign being searched
+    :param cty_list: The list containing geographic information for callsigns
+    :return: Continent, Country, and CQZone of the callsign. Returns None if not found.
+    """
     while len(call_sign) >= 1 and call_sign not in cty_list:
         call_sign = call_sign[:-1]
     if len(call_sign) == 0:
@@ -57,115 +39,136 @@ def search_list(call_sign, cty_list):
 
 def calculate_band(freq):
     """
-    calculate_band calculates the radio band category when provided the callsign's frequency.
+    Calculate the radio band category based on the frequency.
 
-    :param freq: The frequency of a callsign.
-    :return: The radio band of the callsign. None if there is no match.
-    """ 
-    if 1800 <= freq <= 2000:  # between 160 and 6, skipping 6 and 60
-        band = 160
+    :param freq: The frequency of the callsign
+    :return: Radio band corresponding to the frequency, or None if no match is found
+    """
+    if 1800 <= freq <= 2000:
+        return 160
     elif 3500 <= freq <= 4000:
-        band = 80
+        return 80
     elif 7000 <= freq <= 7300:
-        band = 40
+        return 40
     elif 10100 <= freq <= 10150:
-        band = 30
+        return 30
     elif 14000 <= freq <= 14350:
-        band = 20
+        return 20
     elif 18068 <= freq <= 18168:
-        band = 17
+        return 17
     elif 21000 <= freq <= 21450:
-        band = 15
+        return 15
     elif 24890 <= freq <= 24990:
-        band = 12
+        return 12
     elif 28000 <= freq <= 29700:
-        band = 10
+        return 10
     elif 50000 <= freq <= 54000:
-        band = 6
-    else:
-        band = None
-    return band
+        return 6
+    return None
 
 
 def delete_old(df):
     """
-    delete_old deletes entries older than a specified age from the dataframe. Default is 1 day.
+    Delete entries older than 1 day from the dataframe to keep the data current.
 
-    :param df: The dataframe containing our collected data.
-    :return: The dataframe without the older data.
-    """ 
+    :param df: The dataframe to process
+    :return: The dataframe without old entries
+    """
     day_ago = datetime.now().timestamp() - timedelta(days=1).total_seconds()
-    # print(df[df['Timestamp'] <= day_ago].index)
     df = df.drop(df[df['Timestamp'] <= day_ago].index)
     return df
 
 
-def run():
+def run(host, port, spotter):
+    """
+    Main function to connect to the DX Cluster, receive and process data, and store it in a CSV file.
+
+    :param host: The DX Cluster host address
+    :param port: The DX Cluster port number
+    :param spotter: The name of the spotter to track
+    """
     global callsign_df
 
-    with open(cty_file, 'rb') as infile:  # load cty_list file
+    # Load the cty.plist file with callsign information
+    with open(cty_file, 'rb') as infile:
         cty_list = plistlib.load(infile, dict_type=dict)
 
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  
-    s.connect((host, port))  # connect to the DX cluster
+    # Establish a socket connection to the DX Cluster
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect((host, port))  # Connect to the DX cluster
 
-    s.sendall(f"{login}\n".encode())
-    s.sendall(b'SET/SKIMMER\nSET/NORTTY\nSET/FT4\nSET/FT8\nSET/CW\n')
-
-    buffer = ""  # initialize buffer for incoming data
+    buffer = ""  # Buffer to store incoming data
     n = 0
-    while True:  # continue reading from DX cluster
+
+    while True:
         try:
-            data = s.recv(1024).decode()  # receive data from the cluster
-            buffer += data  # add the new data to the buffer
-        except UnicodeDecodeError as e:  # handle decoding errors
-            print(e)
+            data = s.recv(1024).decode()  # Receive data from the cluster
+            buffer += data  # Append the received data to the buffer
+        except UnicodeDecodeError as e:
+            print(f"Decoding error: {e}")
             continue
 
         if not data:
-            break  # handle the case where the connection is closed
+            break  # Stop processing if the connection is closed
 
-        # split the buffer by lines. the last item in the list might be incomplete.
+        # Split the buffer by newlines; the last part may be incomplete
         lines = buffer.split('\n')
-        buffer = lines[-1]  # save the incomplete line back to the buffer
+        buffer = lines[-1]  # Save the incomplete line back to the buffer
 
-        for line in lines[:-1]:  # process all complete lines
+        for line in lines[:-1]:  # Process all complete lines
             spotter_string = spotter + "-#:"
-            if ((" CW " in line) or (" FT4 " in line) or (" FT8 " in line)) and spotter_string in line:  # ensure that we are reading from our spotter
-                # and spotter_string in line:
-                time = datetime.now().timestamp()  # collect timestamp of data
+            if ((" FT4 " in line) or (" FT8 " in line)) and spotter_string in line:
+                time = datetime.now().timestamp()  # Collect the timestamp of the data
 
-                match = re.search(pattern, line)  # use FT8/FT4/CW regex to check if readable
+                match = re.search(pattern, line)  # Match the line with the regex pattern
 
                 if match:
-                    if " CW " in line:
-                        cw_bool = 1
-                        # print(line)
-                    else:
-                        cw_bool = 0
-
                     frequency = match.group(1)
                     call_sign = match.group(2)
                     snr = match.group(3).replace(" ", "")
-                    continent, country, cq_zone = search_list(call_sign, cty_list)  # search the cty_list for callsign data
+                    continent, country, cq_zone = search_list(call_sign, cty_list)
                     band = calculate_band(float(frequency))
 
-                    if band:  # add enhanced callsign info to dataframe
-                        temp_df = pd.DataFrame(
-                            [{'Call Sign': call_sign, 'Continent': continent, 'Country': country, 'Zone': cq_zone,
-                              'Frequency': frequency, 'Band': band, 'SNR': snr, 'Timestamp': time, 'Spotter': spotter, 'CW': cw_bool}])
+                    if band:
+                        # Add the enhanced callsign info to the dataframe
+                        temp_df = pd.DataFrame([{
+                            'Call Sign': call_sign,
+                            'Continent': continent,
+                            'Country': country,
+                            'Zone': cq_zone,
+                            'Frequency': frequency,
+                            'Band': band,
+                            'SNR': snr,
+                            'Timestamp': time,
+                            'Spotter': spotter,
+                            # 'CW': int(" CW " in line)
+                        }])
                         callsign_df = pd.concat([callsign_df, temp_df], ignore_index=True)
                 else:
-                    print("no match: " + line)
+                    print(f"No match: {line}")
 
-        if n > 0 and n % 100 == 0 and not callsign_df.empty:  # overwrite csv file with new info every 100 lines read.
-            callsign_df = delete_old(callsign_df)  # delete old info from dataframe. This keeps info current and csv file size small.
-            callsign_df.to_csv(csv_file, index=False)  # convert dataframe to csv file.
-            print(csv_file + " updated.")
+        # Every 100 lines, update the CSV file with the new info
+        if n > 0 and n % 100 == 0 and not callsign_df.empty:
+            callsign_df = delete_old(callsign_df)  # Keep the CSV size manageable
+            callsign_df.to_csv(csv_file, index=False)
+
+            # Get the current time and print it along with the update message
+            current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            print(f"{csv_file} updated on {current_time}.")
+
         if n == 100000:
-            n = 100
-        n = n + 1
+            n = 100  # Reset line counter to avoid overflow
+        n += 1
 
 
 if __name__ == '__main__':
-    run()
+    # Argument parser for command-line options
+    parser = argparse.ArgumentParser(description="Connect to a DX Cluster, collect spotted callsigns, and store them in a CSV file.")
+    parser.add_argument("-a", "--address", help="Specify hostname/address of the DX Cluster", default=os.getenv("DX_CLUSTER_HOST", "cluster.n2wq.com"))
+    parser.add_argument("-p", "--port", help="Specify port for the DX Cluster", type=int, default=int(os.getenv("DX_CLUSTER_PORT", 7373)))
+    parser.add_argument("-s", "--spotter", help="Specify the spotter name to track", default=os.getenv("SPOTTER_NAME", "VE3EID"))
+
+    args = parser.parse_args()
+
+    # Run the main function with provided arguments
+    run(args.address, args.port, args.spotter)
