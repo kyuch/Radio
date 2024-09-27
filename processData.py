@@ -8,7 +8,8 @@ import os
 
 
 # Regular expression pattern for filtering relevant lines from the DX Cluster data stream
-pattern = r'(\d+\.\d{1,2})\s+([A-Z0-9/]+)\s+([+-]?\s?\d{1,2})\s*dB\s+\d+\s+(?:FT8|FT4|CW)'
+pattern = r'(\d+\.\d{1,2})\s+([A-Z0-9/]+)\s+([+-]?\s?\d{1,2})\s*dB\s+\d+\s+(?:FT8|FT4|CW)' # new regex
+# pattern = r'(\d+\.\d{2})\s+([A-Z0-9/]+)\s+(?:FT8|FT4|CW)\s+([+-]?\s?\d{1,2})\s*dB' # regex for filtering for desired lines from data stream
 
 # Default file names
 cty_file = "cty.plist"
@@ -32,9 +33,9 @@ def search_list(call_sign, cty_list):
     while len(call_sign) >= 1 and call_sign not in cty_list:
         call_sign = call_sign[:-1]
     if len(call_sign) == 0:
-        return None, None, None
+        return None
     else:
-        return cty_list[call_sign]["Continent"], cty_list[call_sign]["Country"], cty_list[call_sign]["CQZone"]
+        return cty_list[call_sign]["CQZone"]
 
 
 def calculate_band(freq):
@@ -97,6 +98,9 @@ def run(host, port, spotter):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((host, port))  # Connect to the DX cluster
 
+    # s.sendall(b'LZ3NY\n')
+    # s.sendall(b'SET/SKIMMER\nSET/NORTTY\nSET/FT4\nSET/FT8\nSET/CW\n')
+
     buffer = ""  # Buffer to store incoming data
     n = 0
 
@@ -126,15 +130,15 @@ def run(host, port, spotter):
                     frequency = match.group(1)
                     call_sign = match.group(2)
                     snr = match.group(3).replace(" ", "")
-                    continent, country, cq_zone = search_list(call_sign, cty_list)
+                    cq_zone = search_list(call_sign, cty_list)
                     band = calculate_band(float(frequency))
 
-                    if band:
+                    if band and cq_zone:
                         # Add the enhanced callsign info to the dataframe
                         temp_df = pd.DataFrame([{
                             'Call Sign': call_sign,
-                            'Continent': continent,
-                            'Country': country,
+                            # 'Continent': continent,
+                            # 'Country': country,
                             'Zone': cq_zone,
                             'Frequency': frequency,
                             'Band': band,

@@ -141,10 +141,13 @@ def reformat_table(table):
     :return: A dataframe reformatted from the pivot table.
     """
     flattened = pd.DataFrame(table.to_records())
+    flattened['Zone'] = pd.to_numeric(flattened['Zone'], errors='coerce')
+    flattened = flattened.sort_values(by='Zone')
     flattened['Zone'] = flattened['Zone'].apply(lambda x: f'<span title="{zone_name_map.get(x, "")}">{str(x).zfill(2)}</span>')
     flattened.reset_index(drop=True)
     flattened1 = (flattened.reindex(
         ['Zone', '160', '80', '40', '20', '15', '10', '6', ' ', '30', '17', '12'], axis=1))
+
 
     flattened1 = flattened1.fillna({' ': ' '})
 
@@ -214,6 +217,8 @@ def update_count_table(count_df, cw_df):
 
 def run(access_key, secret_key, s3_buck):
     df = pd.read_csv(csv_file, keep_default_na=False)  # read from the callsign CSV file.
+    # df['Zone'] = df['Zone'].astype(int)
+    # df['Timestamp'] = df['Timestamp'].astype(float)
     spotter = df['Spotter'].iloc[0]
     df = delete_old(df, span)  # ignore any data older than range from the csv.
 
