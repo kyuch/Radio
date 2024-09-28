@@ -70,13 +70,13 @@ def calculate_band(freq):
 
 def delete_old(df):
     """
-    Delete entries older than 6 hours from the dataframe to keep the data current.
+    Delete entries older than 15 minutes from the dataframe to keep the data current.
 
     :param df: The dataframe to process
     :return: The dataframe without old entries
     """
-    day_ago = datetime.now().timestamp() - timedelta(minutes=15).total_seconds()
-    df = df.drop(df[df['Timestamp'] <= day_ago].index)
+    time_ago = datetime.now().timestamp() - timedelta(minutes=15).total_seconds()
+    df = df.drop(df[df['Timestamp'] <= time_ago].index)
     return df
 
 
