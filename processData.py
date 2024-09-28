@@ -70,12 +70,12 @@ def calculate_band(freq):
 
 def delete_old(df):
     """
-    Delete entries older than 1 day from the dataframe to keep the data current.
+    Delete entries older than 6 hours from the dataframe to keep the data current.
 
     :param df: The dataframe to process
     :return: The dataframe without old entries
     """
-    day_ago = datetime.now().timestamp() - timedelta(days=1).total_seconds()
+    day_ago = datetime.now().timestamp() - timedelta(minutes=15).total_seconds()
     df = df.drop(df[df['Timestamp'] <= day_ago].index)
     return df
 
@@ -89,6 +89,7 @@ def run(host, port, spotter):
     :param spotter: The name of the spotter to track
     """
     global callsign_df
+    last_time = time.time()
 
     # Load the cty.plist file with callsign information
     with open(cty_file, 'rb') as infile:
@@ -151,10 +152,12 @@ def run(host, port, spotter):
                 else:
                     print(f"No match: {line}")
 
-        # Every 100 lines, update the CSV file with the new info
-        if n > 0 and n % 100 == 0 and not callsign_df.empty:
+
+        # Every 500 lines or 30 seconds, update the CSV file with the new info
+        if ((n > 0 and n % 500 == 0) or (time.time() - last_time > 30)) and not callsign_df.empty:
             callsign_df = delete_old(callsign_df)  # Keep the CSV size manageable
             callsign_df.to_csv(csv_file, index=False)
+            last_time = time.time()
 
             # Get the current time and print it along with the update message
             current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")

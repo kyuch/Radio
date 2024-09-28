@@ -16,6 +16,7 @@ import boto3
 from botocore.exceptions import NoCredentialsError, PartialCredentialsError
 import requests
 import xml.etree.ElementTree as ET
+import os
 
 
 pd.set_option('display.max_columns', None)
@@ -216,6 +217,11 @@ def update_count_table(count_df, cw_df):
 
 
 def run(access_key, secret_key, s3_buck):
+    try:
+        df = pd.read_csv(csv_file, keep_default_na=False)
+    except:
+        print(f"Error: {csv_file} was unable to be read. Script will retry in 60 seconds.")
+        return
     df = pd.read_csv(csv_file, keep_default_na=False)  # read from the callsign CSV file.
     # df['Zone'] = df['Zone'].astype(int)
     # df['Timestamp'] = df['Timestamp'].astype(float)
