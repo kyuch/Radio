@@ -89,7 +89,7 @@ def run(host, port, spotter):
     :param spotter: The name of the spotter to track
     """
     global callsign_df
-    last_time = time.time()
+    last_update_time = datetime.now().timestamp()
 
     # Load the cty.plist file with callsign information
     with open(cty_file, 'rb') as infile:
@@ -123,7 +123,7 @@ def run(host, port, spotter):
         for line in lines[:-1]:  # Process all complete lines
             spotter_string = spotter + "-#:"
             if ((" FT4 " in line) or (" FT8 " in line)) and spotter_string in line:
-                time = datetime.now().timestamp()  # Collect the timestamp of the data
+                current_timestamp = datetime.now().timestamp()  # Collect the timestamp of the data
 
                 match = re.search(pattern, line)  # Match the line with the regex pattern
 
@@ -134,7 +134,7 @@ def run(host, port, spotter):
                     cq_zone = search_list(call_sign, cty_list)
                     band = calculate_band(float(frequency))
 
-                    if band and cq_zone:
+                    if band and cq_zone and frequency and call_sign and snr:
                         # Add the enhanced callsign info to the dataframe
                         temp_df = pd.DataFrame([{
                             'Call Sign': call_sign,
@@ -144,7 +144,7 @@ def run(host, port, spotter):
                             'Frequency': frequency,
                             'Band': band,
                             'SNR': snr,
-                            'Timestamp': time,
+                            'Timestamp': current_timestamp,
                             'Spotter': spotter,
                             # 'CW': int(" CW " in line)
                         }])
@@ -154,10 +154,10 @@ def run(host, port, spotter):
 
 
         # Every 500 lines or 30 seconds, update the CSV file with the new info
-        if ((n > 0 and n % 500 == 0) or (time.time() - last_time > 30)) and not callsign_df.empty:
+        if ((n > 0 and n % 500 == 0) or (datetime.now().timestamp() - last_update_time > 30)) and not callsign_df.empty:
             callsign_df = delete_old(callsign_df)  # Keep the CSV size manageable
             callsign_df.to_csv(csv_file, index=False)
-            last_time = time.time()
+            last_update_time = datetime.now().timestamp()
 
             # Get the current time and print it along with the update message
             current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")

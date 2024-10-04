@@ -163,9 +163,12 @@ def delete_old(df, time):
     :param time: The range of age before deletion
     :return: The dataframe without the older entries.
     """
+    df = df[df['Timestamp'].apply(lambda x: isinstance(x, (int, float)))]
+    df = df.reset_index(drop=True)
     day_ago = datetime.now().timestamp() - timedelta(hours=time).total_seconds()
     # print(df[df['Timestamp'] <= day_ago].index)
     df = df.drop(df[df['Timestamp'] <= day_ago].index)
+
     return df
 
 
@@ -222,7 +225,6 @@ def run(access_key, secret_key, s3_buck):
     except:
         print(f"Error: {csv_file} was unable to be read. Script will retry in 60 seconds.")
         return
-    df = pd.read_csv(csv_file, keep_default_na=False)  # read from the callsign CSV file.
     # df['Zone'] = df['Zone'].astype(int)
     # df['Timestamp'] = df['Timestamp'].astype(float)
     spotter = df['Spotter'].iloc[0]
@@ -270,8 +272,8 @@ def run(access_key, secret_key, s3_buck):
     count_table['Zone'] = mean_table['Zone']
     count_table[' '] = mean_table[' ']
 
-    now = dt.datetime.now(dt.timezone.utc).strftime("%b %d, %Y %H:%M:%S")
-    caption_string = "Conditions at " + spotter + " as of " + now + " GMT"  # table caption
+    now = dt.datetime.now(dt.timezone.utc).strftime("%b %d, %Y %H:%M")
+    caption_string = "Current Conditions at " + spotter + " - " + now + " GMT"  # table caption
 
     # apply the styles to the dataframes.
     styled_table1 = count_table.style.apply(lambda x: color_table1, axis=None).set_caption(caption_string)
