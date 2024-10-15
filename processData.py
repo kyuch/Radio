@@ -2,34 +2,66 @@ import re
 import socket
 import plistlib
 from datetime import datetime, timedelta
-import pandas as pd
+import sqlite3
 import argparse
 import os
+import select
+import time
+
+# Precompiled regular expression pattern for filtering relevant lines from the DX Cluster data stream
+compiled_pattern = re.compile(r'(\d+\.\d{1,2})\s+([A-Z0-9/]+)\s+([+-]?\s?\d{1,2})\s*dB\s+\d+\s+(?:FT8|FT4|CW)')
+
+# old regex for testing purposes. comment out when done using
+# compiled_pattern = re.compile(r'(\d+\.\d{2})\s+([A-Z0-9/]+)\s+(?:FT8|FT4|CW)\s+([+-]?\s?\d{1,2})\s*dB')
+
+# SQLite database file name
+db_file = 'callsigns.db'
 
 
-# Regular expression pattern for filtering relevant lines from the DX Cluster data stream
-pattern = r'(\d+\.\d{1,2})\s+([A-Z0-9/]+)\s+([+-]?\s?\d{1,2})\s*dB\s+\d+\s+(?:FT8|FT4|CW)' # new regex
-# pattern = r'(\d+\.\d{2})\s+([A-Z0-9/]+)\s+(?:FT8|FT4|CW)\s+([+-]?\s?\d{1,2})\s*dB' # regex for filtering for desired lines from data stream
+def setup_database():
+    """
+    Sets up the SQLite database and creates the necessary table if it doesn't exist.
+    """
+    conn = sqlite3.connect(db_file)
+    cursor = conn.cursor()
 
-# Default file names
-cty_file = "cty.plist"
-csv_file = 'callsigns.csv'
+    # Create table to store callsign information if it doesn't already exist
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS callsigns (
+            zone INTEGER,
+            band INTEGER,
+            snr INTEGER,
+            timestamp REAL,
+            spotter TEXT
+        )
+    ''')
+    conn.commit()
+    return conn, cursor
 
-# Pandas display options
-pd.options.display.float_format = '{:.0f}'.format
 
-# Create an empty dataframe to store callsigns
-callsign_df = pd.DataFrame()
+def insert_batch(cursor, buffer_list):
+    """
+    Inserts a batch of data into the SQLite database using executemany.
+    """
+    cursor.executemany('''
+        INSERT INTO callsigns (zone, band, snr, timestamp, spotter)
+        VALUES (?, ?, ?, ?, ?)
+    ''', buffer_list)
+
+
+def delete_old_entries(cursor):
+    """
+    Deletes entries older than 15 minutes from the SQLite database to keep the data current.
+    """
+    time_ago = datetime.now().timestamp() - timedelta(minutes=15).total_seconds()
+    cursor.execute('DELETE FROM callsigns WHERE timestamp <= ?', (time_ago,))
 
 
 def search_list(call_sign, cty_list):
     """
-    Search through the cty.plist file to find geographic information for the provided callsign.
-
-    :param call_sign: The radio callsign being searched
-    :param cty_list: The list containing geographic information for callsigns
-    :return: Continent, Country, and CQZone of the callsign. Returns None if not found.
+    Search through the cty.plist file to find CQZone information for the provided callsign.
     """
+    original_call_sign = call_sign  # Keep the original callsign for reference
     while len(call_sign) >= 1 and call_sign not in cty_list:
         call_sign = call_sign[:-1]
     if len(call_sign) == 0:
@@ -41,9 +73,6 @@ def search_list(call_sign, cty_list):
 def calculate_band(freq):
     """
     Calculate the radio band category based on the frequency.
-
-    :param freq: The frequency of the callsign
-    :return: Radio band corresponding to the frequency, or None if no match is found
     """
     if 1800 <= freq <= 2000:
         return 160
@@ -68,112 +97,138 @@ def calculate_band(freq):
     return None
 
 
-def delete_old(df):
+def reconnect(host, port, max_retries=10):
     """
-    Delete entries older than 15 minutes from the dataframe to keep the data current.
+    Attempt to reconnect to the DX Cluster server with an exponential backoff strategy.
+    """
+    retries = 0
+    backoff_time = 5  # Start with 5 seconds of wait time, then double for each retry
 
-    :param df: The dataframe to process
-    :return: The dataframe without old entries
-    """
-    time_ago = datetime.now().timestamp() - timedelta(minutes=15).total_seconds()
-    df = df.drop(df[df['Timestamp'] <= time_ago].index)
-    return df
+    while retries < max_retries:
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.connect((host, port))  # Try reconnecting
+            s.setblocking(0)  # Set socket to non-blocking mode
+            print(f"Reconnected to {host}:{port}")
+            return s
+        except (socket.error, socket.timeout) as e:
+            retries += 1
+            print(f"Reconnection attempt {retries} failed. Error: {e}")
+
+            if retries >= max_retries:
+                print("Max retries reached. Exiting.")
+                raise Exception("Unable to reconnect after multiple attempts.")
+
+            print(f"Retrying in {backoff_time} seconds...")
+            time.sleep(backoff_time)
+            backoff_time *= 2  # Exponential backoff: double the wait time
+
+    return None  # In case the loop exits without success
 
 
 def run(host, port, spotter):
     """
-    Main function to connect to the DX Cluster, receive and process data, and store it in a CSV file.
-
-    :param host: The DX Cluster host address
-    :param port: The DX Cluster port number
-    :param spotter: The name of the spotter to track
+    Main function to connect to the DX Cluster, receive and process data, and store it in the SQLite database.
+    Handles connection timeouts, data processing, and reconnection attempts.
     """
-    global callsign_df
     last_update_time = datetime.now().timestamp()
 
     # Load the cty.plist file with callsign information
-    with open(cty_file, 'rb') as infile:
-        cty_list = plistlib.load(infile, dict_type=dict)
+    try:
+        with open("cty.plist", 'rb') as infile:
+            cty_list = plistlib.load(infile, dict_type=dict)
+    except FileNotFoundError:
+        print(f"Error: cty.plist not found.")
+        return
 
-    # Establish a socket connection to the DX Cluster
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect((host, port))  # Connect to the DX cluster
+    # Establish the initial socket connection
+    s = reconnect(host, port)
 
+    # for testing purposes -- comment out or delete when not in use
     # s.sendall(b'LZ3NY\n')
     # s.sendall(b'SET/SKIMMER\nSET/NORTTY\nSET/FT4\nSET/FT8\nSET/CW\n')
 
+    # Set up the SQLite database
+    conn, cursor = setup_database()
+
     buffer = ""  # Buffer to store incoming data
-    n = 0
+    buffer_entry_count = 0  # Track how many valid entries are processed between updates
+    buffer_list = []  # List to hold data entries before inserting into the database
 
     while True:
-        try:
-            data = s.recv(1024).decode()  # Receive data from the cluster
-            buffer += data  # Append the received data to the buffer
-        except UnicodeDecodeError as e:
-            print(f"Decoding error: {e}")
-            continue
+        now = datetime.now()  # Cache the current time
+        ready_to_read, _, _ = select.select([s], [], [], 1)  # Wait up to 1 second for data
 
-        if not data:
-            break  # Stop processing if the connection is closed
+        if ready_to_read:
+            try:
+                data = s.recv(1024).decode()  # Non-blocking read, only if data is available
 
-        # Split the buffer by newlines; the last part may be incomplete
-        lines = buffer.split('\n')
-        buffer = lines[-1]  # Save the incomplete line back to the buffer
+                if not data:
+                    print("Connection closed by server.")
+                    s = reconnect(host, port)  # Reconnect if the connection is closed
+                    continue
 
-        for line in lines[:-1]:  # Process all complete lines
-            spotter_string = spotter + "-#:"
-            if ((" FT4 " in line) or (" FT8 " in line)) and spotter_string in line:
-                current_timestamp = datetime.now().timestamp()  # Collect the timestamp of the data
+                buffer += data  # Append the received data to the buffer
 
-                match = re.search(pattern, line)  # Match the line with the regex pattern
+            except UnicodeDecodeError as e:
+                print(f"Decoding error: {e}")
+                continue
+            except socket.error as e:
+                print(f"Socket error: {e}. Reconnecting...")
+                s = reconnect(host, port)
+                continue
 
-                if match:
-                    frequency = match.group(1)
-                    call_sign = match.group(2)
-                    snr = match.group(3).replace(" ", "")
-                    cq_zone = search_list(call_sign, cty_list)
-                    band = calculate_band(float(frequency))
+            # Split the buffer by newlines; the last part may be incomplete
+            lines = buffer.split('\n')
+            buffer = lines[-1]  # Save the incomplete line back to the buffer
 
-                    if band and cq_zone and frequency and call_sign and snr:
-                        # Add the enhanced callsign info to the dataframe
-                        temp_df = pd.DataFrame([{
-                            'Call Sign': call_sign,
-                            # 'Continent': continent,
-                            # 'Country': country,
-                            'Zone': cq_zone,
-                            'Frequency': frequency,
-                            'Band': band,
-                            'SNR': snr,
-                            'Timestamp': current_timestamp,
-                            'Spotter': spotter,
-                            # 'CW': int(" CW " in line)
-                        }])
-                        callsign_df = pd.concat([callsign_df, temp_df], ignore_index=True)
-                else:
-                    print(f"No match: {line}")
+            for line in lines[:-1]:  # Process all complete lines
+                spotter_string = spotter + "-#:"
+                if ((" FT4 " in line) or (" FT8 " in line)) and spotter_string in line:
+                    current_timestamp = now.timestamp()  # Use cached timestamp
 
+                    match = compiled_pattern.search(line)  # Use the precompiled regex
 
-        # Every 500 lines or 30 seconds, update the CSV file with the new info
-        if ((n > 0 and n % 500 == 0) or (datetime.now().timestamp() - last_update_time > 30)) and not callsign_df.empty:
-            callsign_df = delete_old(callsign_df)  # Keep the CSV size manageable
-            callsign_df.to_csv(csv_file, index=False)
-            last_update_time = datetime.now().timestamp()
+                    if match:
+                        frequency = match.group(1)
+                        call_sign = match.group(2)
+                        snr = match.group(3).replace(" ", "")
+                        cq_zone = search_list(call_sign, cty_list)
+                        band = calculate_band(float(frequency))
+
+                        if band and cq_zone and snr:  # Skip invalid entries
+                            # Add the enhanced callsign info to the buffer list
+                            buffer_list.append((cq_zone, band, snr, current_timestamp, spotter))
+
+                            buffer_entry_count += 1  # Increment the count of valid entries processed
+
+        # Every 500 lines or 30 seconds, update the database with the new info
+        if ((buffer_entry_count >= 500) or (now.timestamp() - last_update_time > 30)) and buffer_list:
+            insert_batch(cursor, buffer_list)
+            delete_old_entries(cursor)  # Keep the database size manageable
+            conn.commit()  # Commit the changes
+
+            last_update_time = now.timestamp()
 
             # Get the current time and print it along with the update message
-            current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            print(f"{csv_file} updated on {current_time}.")
+            current_time = now.strftime("%Y-%m-%d %H:%M:%S")
+            print(f"Database updated on {current_time}. Processed {buffer_entry_count} total entries from the buffer.")
 
-        if n == 100000:
-            n = 100  # Reset line counter to avoid overflow
-        n += 1
+            # Reset buffer entry count and list after each update
+            buffer_entry_count = 0
+            buffer_list = []
 
 
 if __name__ == '__main__':
     # Argument parser for command-line options
-    parser = argparse.ArgumentParser(description="Connect to a DX Cluster, collect spotted callsigns, and store them in a CSV file.")
-    parser.add_argument("-a", "--address", help="Specify hostname/address of the DX Cluster", default=os.getenv("DX_CLUSTER_HOST", "cluster.n2wq.com"))
-    parser.add_argument("-p", "--port", help="Specify port for the DX Cluster", type=int, default=int(os.getenv("DX_CLUSTER_PORT", 7373)))
-    parser.add_argument("-s", "--spotter", help="Specify the spotter name to track", default=os.getenv("SPOTTER_NAME", "VE3EID"))
+    parser = argparse.ArgumentParser(
+        description="Connect to a DX Cluster, collect spotted callsigns, and store them in an SQLite database.")
+    parser.add_argument("-a", "--address", help="Specify hostname/address of the DX Cluster",
+                        default=os.getenv("DX_CLUSTER_HOST", "100.68.66.71"))
+    parser.add_argument("-p", "--port", help="Specify port for the DX Cluster", type=int,
+                        default=int(os.getenv("DX_CLUSTER_PORT", 7550)))
+    parser.add_argument("-s", "--spotter", help="Specify the spotter name to track",
+                        default=os.getenv("SPOTTER_NAME", "VE3EID"))
 
     args = parser.parse_args()
 

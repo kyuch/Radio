@@ -7,7 +7,7 @@ Run analyzeData.py in terminal: python3 analyzeData.py
 Add "-h" to command to view arguments that can be set
 
 processData.py connects to a DX Cluster, collects all spotted callsigns from a provided spotter, 
-enhances the data for each spotted callsign, and uploads the enhanced data to a csv file.
+enhances the data for each spotted callsign, and uploads the enhanced data to a SQLite database.
 
-analyzeData.py collects callsign info from a csv file, analyzes the data into a pivot table, 
+analyzeData.py collects callsign info from a SQLite database, analyzes the data into a pivot table, 
 generates an HTML page with the table, and uploads it to an AWS S3 bucket.

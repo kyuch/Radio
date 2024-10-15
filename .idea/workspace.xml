@@ -4,13 +4,14 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="28dd482c-a93d-49e3-b0e6-09d9777c16ac" name="Changes" comment="removed CW spots, changed regex and removed login call -- need to bugfix on test branch. Created requirements.txt">
-      <change beforePath="$PROJECT_DIR$/.idea/csv-editor.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/csv-editor.xml" afterDir="false" />
+    <list default="true" id="28dd482c-a93d-49e3-b0e6-09d9777c16ac" name="Changes" comment="added line to delete_old in analyzeData.py that removes all rows where string value is in Timestamp. added more checks in processData.py to ensure that values exist">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/analyzeData.py" beforeDir="false" afterPath="$PROJECT_DIR$/analyzeData.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/callsigns.csv" beforeDir="false" afterPath="$PROJECT_DIR$/callsigns.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/callsigns.csv" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/index.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/processData.py" beforeDir="false" afterPath="$PROJECT_DIR$/processData.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -101,7 +102,7 @@
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/processData.py" />
-      <option name="PARAMETERS" value="" />
+      <option name="PARAMETERS" value="-a cluster.n2wq.com -p 7373" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
       <option name="MODULE_MODE" value="false" />
@@ -479,7 +480,15 @@
       <option name="project" value="LOCAL" />
       <updated>1727471122637</updated>
     </task>
-    <option name="localTasksCounter" value="44" />
+    <task id="LOCAL-00044" summary="added line to delete_old in analyzeData.py that removes all rows where string value is in Timestamp. added more checks in processData.py to ensure that values exist">
+      <option name="closed" value="true" />
+      <created>1728064628874</created>
+      <option name="number" value="00044" />
+      <option name="presentableId" value="LOCAL-00044" />
+      <option name="project" value="LOCAL" />
+      <updated>1728064628874</updated>
+    </task>
+    <option name="localTasksCounter" value="45" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -494,7 +503,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="renamed main to processData.py and created analyzeData.py" />
     <MESSAGE value="csv to dataframe in analyzeData.py" />
     <MESSAGE value="analyzeData.py now creates a pivot table for the data in the csv that can be viewed in index.html" />
     <MESSAGE value="added arguments + argument parser to processData.py. Run program by entering &quot;python3 processData.py&quot; in command line, with &quot;-h&quot; to see the arguments. Also made it so that it only tracks one spotter at a time." />
@@ -519,6 +527,7 @@
     <MESSAGE value="added CW spots to data collection -- implemented &quot;+&quot; symbols in table to represent Band x Zones with CW spots" />
     <MESSAGE value="removed CW spots from avg calculations (kept the + stuff)" />
     <MESSAGE value="removed CW spots, changed regex and removed login call -- need to bugfix on test branch. Created requirements.txt" />
-    <option name="LAST_COMMIT_MESSAGE" value="removed CW spots, changed regex and removed login call -- need to bugfix on test branch. Created requirements.txt" />
+    <MESSAGE value="added line to delete_old in analyzeData.py that removes all rows where string value is in Timestamp. added more checks in processData.py to ensure that values exist" />
+    <option name="LAST_COMMIT_MESSAGE" value="added line to delete_old in analyzeData.py that removes all rows where string value is in Timestamp. added more checks in processData.py to ensure that values exist" />
   </component>
 </project>

@@ -1,12 +1,3 @@
-"""
-   analyzeData.py collects callsign info from a csv file, analyzes the data into a pivot table, 
-   generates an HTML page with the table, and uploads it to an AWS S3 bucket.
-
-   To run, pip install pandas, boto3, jinja2, requests.
-   Author: Alex Kyuchukov
-""" 
-
-
 import time
 import datetime as dt
 from datetime import datetime, timedelta
@@ -16,13 +7,13 @@ import boto3
 from botocore.exceptions import NoCredentialsError, PartialCredentialsError
 import requests
 import xml.etree.ElementTree as ET
-import os
+import htmlmin
+import sqlite3
 
 
 pd.set_option('display.max_columns', None)
 pd.set_option('display.max_rows', None)
 pd.set_option('display.width', 2000)
-csv_file = 'callsigns.csv'
 
 parser = argparse.ArgumentParser()  # argument parser
 parser.add_argument("-f", "--frequency", help="Specify how often data is collected (in minutes). Default = 1",
@@ -54,7 +45,7 @@ zone_name_map = {
     9: 'Northern Zone of South America: FY, HK, HK0 (Malpelo), P4, PJ (Bonaire, Curacao), PZ, YV, 8R, and 9Y.',
     10: 'Western Zone of South America: CP, HC, HC8, and OA.',
     11: 'Central Zone of South America: PY, PY0, and ZP.',
-    12: 'Southwest Zone of South America: 3Y (Peter I), CE, CE0 (Easter Is., Juan Fernandez Is., San Felix Is.), and some Antarctic stations.',
+    12: 'Southwest Zone of South America: 3Y (Peter I), CE, CE0 (Easter Is., Juan Fernandez Is.), and some Antarctic stations.',
     13: 'Southeast Zone of South America: CX, LU, VP8 Islands, and some Antarctic stations.',
     14: 'Western Zone of Europe: C3, CT, CU, DL, EA, EA6, El, F, G, GD, GI, GJ, GM. GU, GW, HB, HB0, LA, LX, ON, OY, OZ, PA, SM, ZB, 3A and 4U1ITU.',
     15: 'Central European Zone: ES, HA, HV, I, IS0, LY, OE, OH, OH0, OJ0, OK, OM, S5, SP, T7, T9, TK, UA2, YL, YU, ZA, 1A0, Z3, 9A, 9H and 4U1VIC.',
@@ -142,12 +133,12 @@ def reformat_table(table):
     :return: A dataframe reformatted from the pivot table.
     """
     flattened = pd.DataFrame(table.to_records())
-    flattened['Zone'] = pd.to_numeric(flattened['Zone'], errors='coerce')
-    flattened = flattened.sort_values(by='Zone')
-    flattened['Zone'] = flattened['Zone'].apply(lambda x: f'<span title="{zone_name_map.get(x, "")}">{str(x).zfill(2)}</span>')
+    flattened['zone'] = pd.to_numeric(flattened['zone'], errors='coerce')
+    flattened = flattened.sort_values(by='zone')
+    flattened['zone'] = flattened['zone'].apply(lambda x: f'<span title="{zone_name_map.get(x, "")}">{str(x).zfill(2)}</span>')
     flattened.reset_index(drop=True)
     flattened1 = (flattened.reindex(
-        ['Zone', '160', '80', '40', '20', '15', '10', '6', ' ', '30', '17', '12'], axis=1))
+        ['zone', '160', '80', '40', '20', '15', '10', '6', ' ', '30', '17', '12'], axis=1))
 
 
     flattened1 = flattened1.fillna({' ': ' '})
@@ -163,11 +154,10 @@ def delete_old(df, time):
     :param time: The range of age before deletion
     :return: The dataframe without the older entries.
     """
-    df = df[df['Timestamp'].apply(lambda x: isinstance(x, (int, float)))]
+    df = df[df['timestamp'].apply(lambda x: isinstance(x, (int, float)))]
     df = df.reset_index(drop=True)
     day_ago = datetime.now().timestamp() - timedelta(hours=time).total_seconds()
-    # print(df[df['Timestamp'] <= day_ago].index)
-    df = df.drop(df[df['Timestamp'] <= day_ago].index)
+    df = df.drop(df[df['timestamp'] <= day_ago].index)
 
     return df
 
@@ -220,37 +210,35 @@ def update_count_table(count_df, cw_df):
 
 
 def run(access_key, secret_key, s3_buck):
+    # Connect to the SQLite database
+    conn = sqlite3.connect('callsigns.db')
+    
+    # Read data from the SQLite table `callsigns` into a pandas DataFrame
+    query = """
+    SELECT zone, band, snr, timestamp, spotter
+    FROM callsigns
+    """
+    
     try:
-        df = pd.read_csv(csv_file, keep_default_na=False)
-    except:
-        print(f"Error: {csv_file} was unable to be read. Script will retry in 60 seconds.")
+        df = pd.read_sql_query(query, conn)
+    except Exception as e:
+        print(f"Error: Unable to read data from the SQLite database. {e}")
         return
-    # df['Zone'] = df['Zone'].astype(int)
-    # df['Timestamp'] = df['Timestamp'].astype(float)
-    spotter = df['Spotter'].iloc[0]
-    df = delete_old(df, span)  # ignore any data older than range from the csv.
+    finally:
+        conn.close()  # Close the database connection after reading the data
 
-    # COMMENTING OUT FOR NOW -- NEED TO FIX BUG
-    # cw_table = df.pivot_table(values='CW', index=['Zone'], columns=['Band'], aggfunc='sum')  # count CW spots
-    # cw_table = cw_table.fillna(0)
-    # cw_table = cw_table.astype(int)
-    # cw_table = reformat_table(cw_table)
-    # print(cw_table)
+    spotter = df['spotter'].iloc[0]
+    df = delete_old(df, span)  # ignore any data older than range from the database.
 
-    # filtered_df = df.loc[df['CW'] == 0]  # create df without CW zones for calculation purposes
-
-    count_table = df.pivot_table(values='SNR', index=['Zone'], columns=['Band'], aggfunc='count')  # pivot based on Zones and Bands with SNR being the value.
+    count_table = df.pivot_table(values='snr', index=['zone'], columns=['band'], aggfunc='count')  # pivot based on Zones and Bands with snr being the value.
     count_table = count_table.fillna(0)
     count_table = count_table.astype(int)
     count_table = reformat_table(count_table)
-    # print(count_table)
 
-    mean_table = df.pivot_table(values='SNR', index=['Zone'], columns=['Band'], aggfunc='mean')  # turn dataframe into pivot table.
+    mean_table = df.pivot_table(values='snr', index=['zone'], columns=['band'], aggfunc='mean')  # turn dataframe into pivot table.
     mean_table = reformat_table(mean_table)
 
-
-
-    def apply_color(val):  # colors cells based on if the Zone/Bands are Hot or Marginal.
+    def apply_color(val):  # colors cells based on if the zone/Bands are Hot or Marginal.
         if pd.isna(val):
             return 'background-color: #f0f0f0'
         elif val <= -15:
@@ -263,22 +251,22 @@ def run(access_key, secret_key, s3_buck):
             return 'background-color: #e57373'
 
     # apply color map to numeric columns only.
-    means_no_zone = mean_table.drop(columns=['Zone', ' '])
+    means_no_zone = mean_table.drop(columns=['zone', ' '])
     color_table1 = means_no_zone.map(apply_color)
 
     count_table = replace_values(count_table)
-    # count_table = update_count_table(count_table, cw_table)
-    # add the 'Zone' column back without applying the color map to it.
-    count_table['Zone'] = mean_table['Zone']
+
+    # add the 'zone' column back without applying the color map to it.
+    count_table['zone'] = mean_table['zone']
     count_table[' '] = mean_table[' ']
 
     now = dt.datetime.now(dt.timezone.utc).strftime("%b %d, %Y %H:%M")
-    caption_string = "Current Conditions at " + spotter + " - " + now + " GMT"  # table caption
+    caption_string = "Realtime Spots - " + spotter + " - " + now + " GMT"  # table caption
 
     # apply the styles to the dataframes.
     styled_table1 = count_table.style.apply(lambda x: color_table1, axis=None).set_caption(caption_string)
 
-    styled_table1.set_properties(subset=['Zone'], **{'font-weight': 'bold'})
+    styled_table1.set_properties(subset=['zone'], **{'font-weight': 'bold'})
     styled_table1.set_properties(**{'text-align': 'center'})
 
     # set table styles to different parts of the table.
@@ -297,8 +285,6 @@ def run(access_key, secret_key, s3_buck):
 
     html1 = html1.replace('<table ',
                           '<table style="width: 60vw; table-layout: fixed; margin-left: auto; margin-right: auto;" ')
-    # html1 = html1.replace('<thead>',
-    #                       '<thead><colgroup><col style="width: 118px;"></colgroup>')
 
     # legend HTML block.
     legend_html = f"""
@@ -344,17 +330,18 @@ def run(access_key, secret_key, s3_buck):
     xml_data = solar_response.content
     root = ET.fromstring(xml_data)
 
-    # extract relevant data from XML.
+   # Extract solar and band condition data
     solar_data = {
         "SFI": root.findtext("solardata/solarflux"),
         "Sunspots": root.findtext("solardata/sunspots"),
         "A-Index": root.findtext("solardata/aindex"),
         "K-Index": root.findtext("solardata/kindex"),
         "X-Ray": root.findtext("solardata/xray"),
-        "Signal Noise": root.findtext("solardata/signalnoise"),
+        "Signal_Noise": root.findtext("solardata/signalnoise"),  # Replace space with an underscore for key safety
+        "Aurora": root.findtext("solardata/aurora"),
+        "Lat.": root.findtext("solardata/latdegree"),
     }
 
-    # extract and organize conditions for each band, day, and night.
     conditions = {
         "80m-40m": {"Day": "", "Night": ""},
         "30m-20m": {"Day": "", "Night": ""},
@@ -362,7 +349,6 @@ def run(access_key, secret_key, s3_buck):
         "12m-10m": {"Day": "", "Night": ""},
     }
 
-    # fill in the day and night conditions for each band.
     for band in root.findall("solardata/calculatedconditions/band"):
         band_name = band.get("name")
         time = band.get("time")
@@ -370,31 +356,41 @@ def run(access_key, secret_key, s3_buck):
         if band_name in conditions:
             conditions[band_name][time.capitalize()] = condition
 
-    # HTML block for the solar terrestrial data table.
-    solar_table_html = """
-    <div style="width: 100%; text-align: center; font-weight: bold; margin-bottom: 5px;">Solar-Terrestrial Data</div>
+    # HTML content
+    solar_table_html = f"""
+    <div style="width: 100%; text-align: center; font-weight: bold; margin-bottom: 5px;">Solar Data by N0NBH</div>
     <hr>
     <div style="display: flex; justify-content: center; margin-bottom: 5px;">
         <div style="margin-right: 20px;">
-            <span style="font-weight: bold;">SFI:</span> <span style="font-weight: bold;">{SFI}</span>
+            <span style="font-weight: bold;">SFI:</span> <span style="font-weight: bold;">{solar_data['SFI']}</span>
         </div>
         <div>
-            <span style="font-weight: bold;">SN:</span> <span style="font-weight: bold;">{Sunspots}</span>
+            <span style="font-weight: bold;">SSN:</span> <span style="font-weight: bold;">{solar_data['Sunspots']}</span>
         </div>
     </div>
-    <div style="display: flex; justify-content: center; margin-bottom: 5px;">
-    <div style="flex: 1; text-align: center;">
-        <span style="font-weight: bold;">A:</span> <span style="font-weight: bold;">{A-Index}</span>
+<div style="display: inline-flex; justify-content: center; align-items: center; width: 100%; text-align: center; white-space: nowrap;">
+    <div style="margin-right: 10px;">
+        <span style="font-weight: bold;">A:</span> <span style="font-weight: bold;">{solar_data['A-Index']}</span>
     </div>
-    <div style="flex: 1; text-align: center;">
-        <span style="font-weight: bold;">K:</span> <span style="font-weight: bold;">{K-Index}</span>
+    <div style="margin-right: 10px;">
+        <span style="font-weight: bold;">K:</span> <span style="font-weight: bold;">{solar_data['K-Index']}</span>
     </div>
-    <div style="flex: 1; text-align: center;">
-        <span style="font-weight: bold;">X:</span> <span style="font-weight: bold;">{X-Ray}</span>
+    <div>
+        <span style="font-weight: bold;">X:</span> <span style="font-weight: bold;">{solar_data['X-Ray']}</span>
     </div>
 </div>
+
+<div style="display: flex; justify-content: center; align-items: center; white-space: nowrap;">
+    <div style="margin-right: 20px;">
+        <span style="font-weight: bold;">Aurora:</span> <span style="font-weight: bold;">{solar_data['Aurora']}</span>
+    </div>
+    <div>
+        <span style="font-weight: bold;">Lat.:</span> <span style="font-weight: bold;">{solar_data['Lat.']}</span>
+    </div>
+</div>
+
     <hr>
-    <div style="width: 100%; text-align: center; font-weight: bold; margin-bottom: 5px;">Calculated Conditions</div>
+    <div style="width: 100%; text-align: center; font-weight: bold; margin-top: 10px;">Band Conditions</div>
     <table style="width: 60%; margin: 0 auto; border-collapse: collapse;">
         <thead>
             <tr>
@@ -406,7 +402,7 @@ def run(access_key, secret_key, s3_buck):
         <tbody>
     """
 
-    # add the conditions for each band with color coding.
+ # add the conditions for each band with color coding.
     for band, condition in conditions.items():
         day_condition = condition.get("Day", "N/A")
         night_condition = condition.get("Night", "N/A")
@@ -431,17 +427,25 @@ def run(access_key, secret_key, s3_buck):
         </tr>
         """
 
-    # close the table.
     solar_table_html += """
         </tbody>
     </table>
     <div style="margin-top: 5px; text-align: center">
-            <span style="font-weight: bold;">Signal Noise:</span> <span style="font-weight: bold;">{Signal Noise}</span>
-        </div>
+        <span style="font-weight: bold;">Signal Noise:</span> <span style="font-weight: bold;">{Signal_Noise}</span>
+    </div>
     """
 
-    # Insert the solar data values into the HTML template.
-    solar_table_html = solar_table_html.format(**solar_data)
+    # Formatting the placeholders directly in `solar_table_html`
+    solar_table_html = solar_table_html.format(
+        SFI=solar_data['SFI'],
+        Sunspots=solar_data['Sunspots'],
+        A_Index=solar_data['A-Index'],
+        K_Index=solar_data['K-Index'],
+        X_Ray=solar_data['X-Ray'],
+        Signal_Noise=solar_data['Signal_Noise'],
+        Aurora=solar_data['Aurora'],
+        Lat=solar_data['Lat.']
+    )
 
     # wrap the table in a fixed div.
     solar_table_html = f"""
@@ -450,8 +454,29 @@ def run(access_key, secret_key, s3_buck):
     </div>
     """
 
+    final_html = f"""
+    <style>
+        body {{
+            margin: 0;
+            padding: 0;
+            overflow-y: hidden;
+        }}
+        html {{
+            height: 100%;
+        }}
+    </style>
+    <div style="display: flex; width: 100%; height: 100%;">
+        {solar_table_html}
+        <div style="position: relative; flex-grow: 1; padding-left: 160px; overflow-y: auto; font-family: 'Roboto', monospace;">
+            <div style="max-height: 80vh; overflow-y: auto; padding-top: 0.75%; padding-bottom: 10%;">
+                <!-- Add your main table content here (html1) -->
+            </div>
+        </div>
+    </div>
+    """
 
-    # Final HTML block with solar table, main table, and legend html blocks all together.
+
+       # Final HTML block with solar table, main table, and legend html blocks all together.
     final_html = f"""
     <style>
         body {{
@@ -465,7 +490,7 @@ def run(access_key, secret_key, s3_buck):
     </style>
     <div style="display: flex; width: 100%; height: 100%;">
         {solar_table_html}
-        <div style="position: relative; flex-grow: 1; padding-left: 160px; overflow-y: auto; font-family: 'Roboto', monospace;"> <!-- Added padding to accommodate the table -->
+        <div style="position: relative; flex-grow: 1; padding-left: 120px; overflow-y: auto; font-family: 'Roboto', monospace;"> <!-- Added padding to accommodate the table -->
             <div style="max-height: 80vh; overflow-y: auto; padding-top: 0.75%; padding-bottom: 10%;"> <!-- This div creates the scrollable area -->
                 {html1}
             </div>
@@ -474,8 +499,13 @@ def run(access_key, secret_key, s3_buck):
     </div>
     """
 
-    with open("index.html", "w", encoding="utf-8") as text_file:  # write HTML data to index.html file.
-        text_file.write(final_html)
+    # Minify the final_html before writing it to the file
+    minified_html = htmlmin.minify(final_html, remove_empty_space=True, remove_comments=True)
+
+    # Write the minified HTML to index.html
+    with open("index.html", "w", encoding="utf-8") as text_file:  # write minified HTML data to index.html file.
+        text_file.write(minified_html)
+
     print("Table updated in index.html at " + now)
     
     upload_file_to_s3("index.html", s3_buck, access_key, secret_key)  # upload index.html to S3 bucket
