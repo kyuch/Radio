@@ -1,23 +1,23 @@
 {
-    "Summary": "Current solar and geomagnetic conditions are favorable for shortwave propagation. With a Solar Flux Index of 172 and 116 sunspots, we're experiencing strong solar activity. The K-Index of 0 indicates very quiet geomagnetic conditions, which is excellent for stable propagation. The X-Ray flux at C1.9 suggests moderate solar flare activity, potentially enhancing ionization. Low signal noise (S0-S1) and calm magnetic fields (0.2) further contribute to good conditions. The solar wind speed of 332.1 km/s is moderate, not causing significant disturbances. Given the time (02:39 UTC) and location (FN05GK), nighttime propagation will dominate for the next few hours, favoring lower bands for DX, while higher bands may open towards dawn, especially for east-west paths.",
+    "Summary": "Current solar and geomagnetic conditions are favorable for HF propagation. With an SFI of 172 and 116 sunspots, we're experiencing strong solar activity. The K-index of 1 indicates quiet geomagnetic conditions, which is excellent for stable propagation. The X-ray flux at C1.0 suggests minimal D-layer absorption. The aurora latitude at 66.5\u00b0 is high, allowing for good polar paths. The solar wind speed of 329.7 km/s and positive Bz of 2.9 nT further support stable ionospheric conditions. Given the time (19:27 UTC) and location (FN05GK), we're approaching nighttime conditions in Eastern North America. This setup favors long-distance communication on lower bands, while higher bands may still offer some opportunities before closing for the night. DX possibilities are excellent, especially on east-west paths and towards Europe and Africa.",
     "Low_Bands": {
         "Rating": "Excellent",
-        "Explanation": "Expect exceptional conditions on 160m and 80m for the next 2-6 hours. These bands will offer strong, stable signals for both regional and DX contacts. Focus on paths to Europe, Africa, and the Middle East. CW and FT modes will be particularly effective for reaching distant stations. SSB should also perform well for closer contacts within North America and to South America."
+        "Explanation": "Expect outstanding conditions on 160m and 80m as night approaches. These bands will open first to Europe and Africa, then extend globally. CW and digital modes will be highly effective, with SSB performing well on 80m. Look for DX opportunities to Eastern Europe, Russia, and the Middle East. Regional contacts across North America will be solid throughout the night."
     },
     "Medium_Bands": {
         "Rating": "Good",
-        "Explanation": "40m and 30m will provide reliable propagation, especially for DX to Europe and Africa. As dawn approaches, expect improving conditions towards Asia and the Pacific. These bands will remain open for regional contacts throughout the night. CW and digital modes will be most effective for DX, while SSB can be used for closer contacts."
+        "Explanation": "40m and 30m will provide reliable long-distance communication. As darkness spreads, these bands will support excellent DX to Europe, Africa, and later to Asia and the Pacific. 30m will be particularly good for digital modes like FT8. Expect strong signals from South America and the Caribbean. Western USA stations may find good openings to Asia and the Pacific."
     },
     "Upper_Bands": {
         "Rating": "Fair",
-        "Explanation": "20m, 17m, and 15m will be mostly closed for DX during nighttime hours. However, as dawn approaches (around 12:13 UTC), expect these bands to start opening, first on 20m, then progressively to 17m and 15m. Focus on east-west paths to Europe and later to Asia. FT8 might be the best mode to catch the early openings."
+        "Explanation": "20m, 17m, and 15m are transitioning. 20m may remain open for DX to Europe and Africa for a few more hours, with potential for long path to Asia. 17m and 15m will close soon but might offer some last-minute DX opportunities to South America and Africa. Focus on east-west paths while these bands are still open."
     },
     "High_Bands": {
         "Rating": "Poor",
-        "Explanation": "12m and 10m will be closed during nighttime hours. There's a slight chance of sporadic E openings on 10m towards dawn, but this is unpredictable. These bands are best avoided for the next few hours until after sunrise."
+        "Explanation": "12m and 10m are closing or already closed for DX work. There might be some sporadic short-skip openings on 10m to the Caribbean or Central America, but these will be brief. Consider moving to lower bands for better results."
     },
     "Magic_Band": {
         "Rating": "Poor",
-        "Explanation": "6m is unlikely to offer any significant propagation during nighttime hours from your location. There's a very small chance of sporadic E, but it's not reliable. Focus on other bands for now."
+        "Explanation": "6m is unlikely to provide any significant openings at this time. However, keep an eye out for possible sporadic-E openings, which can occur unexpectedly, especially to the south towards the Caribbean or Central America."
     }
 }

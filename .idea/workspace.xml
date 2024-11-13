@@ -4,8 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="28dd482c-a93d-49e3-b0e6-09d9777c16ac" name="Changes" comment="lots of changes. now uses stored AWS credentials instead of command line input. now uses AI model analysis, with new bedrockAnalysis.py file.">
+    <list default="true" id="28dd482c-a93d-49e3-b0e6-09d9777c16ac" name="Changes" comment="changed Magnetic Field to Bz">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/bedrock.json" beforeDir="false" afterPath="$PROJECT_DIR$/bedrock.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/bedrockAnalysis.py" beforeDir="false" afterPath="$PROJECT_DIR$/bedrockAnalysis.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -502,7 +503,15 @@
       <option name="project" value="LOCAL" />
       <updated>1731524222579</updated>
     </task>
-    <option name="localTasksCounter" value="47" />
+    <task id="LOCAL-00047" summary="changed Magnetic Field to Bz">
+      <option name="closed" value="true" />
+      <created>1731524580833</created>
+      <option name="number" value="00047" />
+      <option name="presentableId" value="LOCAL-00047" />
+      <option name="project" value="LOCAL" />
+      <updated>1731524580833</updated>
+    </task>
+    <option name="localTasksCounter" value="48" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -517,7 +526,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="added arguments + argument parser to processData.py. Run program by entering &quot;python3 processData.py&quot; in command line, with &quot;-h&quot; to see the arguments. Also made it so that it only tracks one spotter at a time." />
     <MESSAGE value="added ft4 to stream. changed pivot table styling and formatting. made pivot table display count of data points rather than average, but heatmap is based off average." />
     <MESSAGE value="made significant changes to the displayed table. seperated into two graphs for contesting and warc, reorganized it, etc." />
     <MESSAGE value="reformatted the html table further" />
@@ -542,6 +550,7 @@
     <MESSAGE value="added line to delete_old in analyzeData.py that removes all rows where string value is in Timestamp. added more checks in processData.py to ensure that values exist" />
     <MESSAGE value="large changes -- no longer using csv files, now using SQLite databases. processData.py now attempts to reconnect to server if lost connection. analyzeData.py now &quot;minifies&quot; html file for convenience." />
     <MESSAGE value="lots of changes. now uses stored AWS credentials instead of command line input. now uses AI model analysis, with new bedrockAnalysis.py file." />
-    <option name="LAST_COMMIT_MESSAGE" value="lots of changes. now uses stored AWS credentials instead of command line input. now uses AI model analysis, with new bedrockAnalysis.py file." />
+    <MESSAGE value="changed Magnetic Field to Bz" />
+    <option name="LAST_COMMIT_MESSAGE" value="changed Magnetic Field to Bz" />
   </component>
 </project>

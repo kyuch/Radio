@@ -190,7 +190,9 @@ def run(s3_bucket):
     root = ET.fromstring(xml_data)
 
     today = date.today()
+    tomorrow = today + timedelta(days=1)
     loc_rise_set = location_sunrise_sunset(maidenhead_grid_locator, today)
+    loc_rise_set_tomorrow = location_sunrise_sunset(maidenhead_grid_locator, tomorrow)
     now = dt.datetime.now(dt.timezone.utc).strftime("%b %d, %Y %H:%M")
 
     solar_data_bedrock_adjusted = {
@@ -198,19 +200,21 @@ def run(s3_bucket):
         "Sunspots": root.findtext("solardata/sunspots"),
         "K-Index": root.findtext("solardata/kindex"),
         "X-Ray": root.findtext("solardata/xray"),
-        "Signal_Noise": root.findtext("solardata/signalnoise"),  # Replace space with an underscore for key safety
-        "Lat.": root.findtext("solardata/latdegree"),
+        "Aurora Latitude": root.findtext("solardata/latdegree"),
         "Helium Line": root.findtext("solardata/heliumline"),
         "Proton Flux": root.findtext("solardata/protonflux"),
         "Electron Flux": root.findtext("solardata/electonflux"),
-        "Normalization": root.findtext("solardata/normalization"),
         "Solar Wind": root.findtext("solardata/solarwind"),
         "Bz": root.findtext("solardata/magneticfield"),
         "Date and Time": (now + " UTC"),
         "Latitude": loc_rise_set.get('latitude'),
         "Longitude": loc_rise_set.get('longitude'),
-        "Sunrise": loc_rise_set.get('sunrise'),
-        "Sunset": loc_rise_set.get('sunset')
+        "Today's Sunrise": loc_rise_set.get('sunrise'),
+        "Today's Sunset": loc_rise_set.get('sunset'),
+        "Tomorrow's Sunrise": loc_rise_set_tomorrow.get('sunrise'),
+        "Tomorrow's Sunset": loc_rise_set_tomorrow.get('sunset'),
+        "Aurora Short Term Forecast": "https://services.swpc.noaa.gov/text/aurora-nowcast-hemi-power.txt",
+        "D-Region Absorption": "https://services.swpc.noaa.gov/text/drap_global_frequencies.txt"
     }
 
     xml_current_data = "<current_data>\n"
