@@ -1,15 +1,18 @@
+import json
 import time
 import datetime as dt
 from datetime import datetime, timedelta
 import pandas as pd
+import numpy as np
+from scipy.stats import linregress
 import argparse
 import boto3
-from botocore.exceptions import NoCredentialsError, PartialCredentialsError
+from botocore.exceptions import ClientError, NoCredentialsError, PartialCredentialsError
 import requests
 import xml.etree.ElementTree as ET
+import os
 import htmlmin
 import sqlite3
-
 
 pd.set_option('display.max_columns', None)
 pd.set_option('display.max_rows', None)
@@ -38,10 +41,10 @@ zone_name_map = {
     2: 'Northeastern Zone of North America: VO2 Labrador, the portion of VE2 Quebec north of the 50th parallel, the VE8 Northwest and Nunavut Territories east of 102 degrees (Includes the islands of King Christian, King William, Prince of Wales, Somerset, Bathurst, Devon, Ellesmere, Baffin and the Melville and Boothia Peninsulas, excluding Akimiski Island).',
     3: 'Western Zone of North America: VE7, W6, and the W7 states of Arizona, Idaho, Nevada, Oregon, Utah, and Washington.',
     4: 'Central Zone of North America: VE3, VE4, VE5, VE6, VE8 Akimiski Island, and W7 states of Montana and Wyoming. W0, W9, W8 (except West Virginia), W5, and the W4 states of Alabama, Tennessee, and Kentucky.',
-    5: 'Eastern Zone of North America: 4U1UN, CY9, CY0, FP, VE1, VE9, VY2, VO1 and the portion of VE2 Quebec south of the 50th parallel. VP9, W1, W2, W3 and the W4 states of Florida, Georgia, South Carolina, North Carolina, Virginia and the W8 state of West Virginia.',
+    5: 'Eastern Zone of North America: 4U1UN, CY9, CY0, FP, VE1, VE9, VY2, VO1 and the portion of VE2 Quebec south of the **th parallel. VP9, W1, W2, W3 and the W4 states of Florida, Georgia, South Carolina, North Carolina, Virginia and the W8 state of West Virginia.',
     6: 'Southern Zone of North America: XE/XF, XF4 (Revilla Gigedo).',
     7: 'Central American Zone: FO (Clipperton), HK0 (San Andres and Providencia), HP, HR, TG, TI, TI9, V3, YN and YS.',
-    8: 'West Indies Zone: C6, CO, FG, FJ, FM, FS, HH, HI, J3, J6, J7, J8, KG4 (Guantanamo), KP1, KP2, KP4, KP5, PJ (Saba, St. Maarten, St. Eustatius), V2, V4, VP2, VP5, YV0 (Aves Is.), ZF, 6Y, and 8P.',
+    8: 'West Indies Zone: C6, CO, FG, FJ, FM, FS, HH, HI, J3, J6, J7, J8, KG4 (Guantanamo), KP1, KP2, KP4, KP5, PJ (Saba, St. Maarten, St. Eustatius), V2, V4, VP2, VP5, YV0 (Aves Is.), ZF, and 8P.',
     9: 'Northern Zone of South America: FY, HK, HK0 (Malpelo), P4, PJ (Bonaire, Curacao), PZ, YV, 8R, and 9Y.',
     10: 'Western Zone of South America: CP, HC, HC8, and OA.',
     11: 'Central Zone of South America: PY, PY0, and ZP.',
@@ -69,49 +72,73 @@ zone_name_map = {
     33: 'Northwestern Zone of Africa: CN, CT3, EA8, EA9, IG9, IH9 (Pantelleria Is.), S0, 3V and 7X.',
     34: 'Northeastern Zone of Africa: ST, SU and 5A.',
     35: 'Central Zone of Africa: C5, D4, EL J5, TU, TY, TZ, XT, 3X, 5N, 5T, 5U, 5V, 6W, 9G and 9L.',
-    36: 'Equatorial Zone of Africa: D2, TJ, TL, TN, S9, TR, TT, ZD7, ZD8, 3C, 3C0, 9J, 9Q, 9U and 9X.',
+    36: 'Equatorial Zone of Africa: D2, TJ, TL, TN, S9, TR, TT, ZD7, ZD8, 3C, 3C0, **, 9Q, 9U and 9X.',
     37: 'Eastern Zone of Africa: C9, ET, E3, J2, T5, 5H, 5X, 5Z, 7O and 7Q.',
     38: 'South African Zone: A2, V5, ZD9, Z2, ZS1-ZS8, 3DA, 3Y (Bouvet Is.), 7P, and some Antarctic stations.',
     39: 'Madagascar Zone: D6, FT-W, FT-X, FT-Z, FH, FR, S7, VK0 (Heard Is.) VQ9, 3B6/7, 3B8, 3B9, 5R8 and some Antarctic stations.',
     40: 'North Atlantic Zone: JW, JX, OX, R1FJ (Franz Josef Land), and TF.'
 }
 
-def get_aws_credentials():
+
+def get_s3_client():
     """
-    Prompts the user to input their AWS credentials and the bucket they'd like to upload to.
-
-    :return: A dictionary containing 'aws_access_key_id', 'aws_secret_access_key', and 's3_bucket'.
+    Retrieve the temporary credentials from the instance profile and create an S3 client.
     """
-    access_key = input("Enter your AWS Access Key ID: ")
-    secret_key = input("Enter your AWS Secret Access Key: ")
-    bucket = input("Enter the name of the S3 Bucket you'd like to write to: ")
+    try:
+        # Use the boto3 session to get the credentials from the instance profile
+        session = boto3.Session()
+        credentials = session.get_credentials().get_frozen_credentials()
 
-    return {
-        'aws_access_key_id': access_key,
-        'aws_secret_access_key': secret_key,
-        's3_bucket': bucket
-    }
+        # Create the S3 client using the temporary credentials
+        s3 = boto3.client(
+            's3',
+            aws_access_key_id=credentials.access_key,
+            aws_secret_access_key=credentials.secret_key,
+            aws_session_token=credentials.token
+        )
+        return s3
+    except ClientError as e:
+        print(f"Error getting S3 client: {e}")
+        return None
 
 
-def upload_file_to_s3(file_name, bucket_name, acc_key, sec_key):
+def retrieve_bedrock_json(bucket_name):
     """
-    Uploads the html file to the AWS S3 bucket.
+    Retrieves json file containing Bedrock response from S3 bucket.
+    :return: bedrock.json file.
+    """
+    file_name = "bedrock.json"
+    s3_client = get_s3_client()
+    try:
+        response = s3_client.get_object(Bucket=bucket_name, Key=file_name)
+        json_data = response['Body'].read().decode('utf-8')
+        data = json.loads(json_data)
+        return data
+    except FileNotFoundError:
+        print(f"The file {file_name} was not found")
+    except NoCredentialsError:
+        print("Credentials not available")
+    except PartialCredentialsError:
+        print("Incomplete credentials provided")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+    return False
+
+
+
+def upload_file_to_s3(file_name, bucket_name):
+    """
+    Uploads the html file to the AWS S3 bucket using the IAM role credentials.
 
     :param file_name: The name of the html file being uploaded.
     :param bucket_name: The name of the bucket being uploaded to.
-    :param acc_key: The AWS access key for S3 access.
-    :param sec_key: The secret access key for the AWS access key.
     :return: Boolean True if the file was uploaded successfully. False if not uploaded successfully.
-    """ 
-    creds = {
-        'aws_access_key_id': acc_key,
-        'aws_secret_access_key': sec_key
-    }
-    s3_client = boto3.client('s3', **creds)
+    """
+    s3_client = get_s3_client()
     obj_name = 'index.html'
 
     try:
-        s3_client.upload_file(file_name, bucket_name, obj_name, ExtraArgs={'ContentType':'text/html; charset=utf-8'})
+        s3_client.upload_file(file_name, bucket_name, obj_name, ExtraArgs={'ContentType': 'text/html; charset=utf-8'})
         print(f"File {file_name} uploaded successfully to {bucket_name}/{obj_name}")
         return True
     except FileNotFoundError:
@@ -122,7 +149,7 @@ def upload_file_to_s3(file_name, bucket_name, acc_key, sec_key):
         print("Incomplete credentials provided")
     except Exception as e:
         print(f"An error occurred: {e}")
-    quit(1)
+    return False
 
 
 def reformat_table(table):
@@ -135,31 +162,18 @@ def reformat_table(table):
     flattened = pd.DataFrame(table.to_records())
     flattened['zone'] = pd.to_numeric(flattened['zone'], errors='coerce')
     flattened = flattened.sort_values(by='zone')
-    flattened['zone'] = flattened['zone'].apply(lambda x: f'<span title="{zone_name_map.get(x, "")}">{str(x).zfill(2)}</span>')
+    # Updated lambda function to use CSS tooltips
+    flattened['zone'] = flattened['zone'].apply(
+        lambda
+            x: f'<span class="tooltip">{str(x).zfill(2)}<span class="tooltiptext">{zone_name_map.get(x, "")}</span></span>'
+    )
     flattened.reset_index(drop=True)
     flattened1 = (flattened.reindex(
         ['zone', '160', '80', '40', '20', '15', '10', '6', ' ', '30', '17', '12'], axis=1))
 
-
     flattened1 = flattened1.fillna({' ': ' '})
 
     return flattened1
-
-
-def delete_old(df, time):
-    """
-    Deletes entries older than the range from the dataframe.
-
-    :param df: The dataframe being modified.
-    :param time: The range of age before deletion
-    :return: The dataframe without the older entries.
-    """
-    df = df[df['timestamp'].apply(lambda x: isinstance(x, (int, float)))]
-    df = df.reset_index(drop=True)
-    day_ago = datetime.now().timestamp() - timedelta(hours=time).total_seconds()
-    df = df.drop(df[df['timestamp'] <= day_ago].index)
-
-    return df
 
 
 def replace_values(df):
@@ -176,14 +190,35 @@ def replace_values(df):
             if x == 0:
                 return ' '
             elif x <= sparse:
-                return '◻'
+                return '\u25CB'
             elif sparse < x < busy:
-                return '◩'
+                return '\u25d1'
             elif x >= busy:
-                return '◼'
+                return '\u25cf'
         return x
 
     return df.map(replace_value)
+
+
+def slope_to_unicode(slope):
+    """
+    Converts a slope value to a corresponding Unicode character based on the specified ranges.
+
+    :param slope: The slope value (float) to convert.
+    :return: A Unicode character representing the direction of the slope.
+    """
+    if -0.1 <= slope <= 0.1:
+        return '\u21D4'  # ⇔
+    elif 0.1 < slope <= 0.3:
+        return '\u21D7'  # ⇗
+    elif slope > 0.3:
+        return '\u21D1'  # ⇑
+    elif -0.3 <= slope < -0.1:
+        return '\u21D8'  # ⇘
+    elif slope < -0.3:
+        return '\u21D3'  # ⇓
+    else:
+        return ''  # In case of NaN or other unexpected values
 
 
 def update_count_table(count_df, cw_df):
@@ -203,40 +238,71 @@ def update_count_table(count_df, cw_df):
                 try:
                     if cw_df[col].iloc[i] >= 1:  # check if CW table has 1 or more
                         count_df.loc[i, col] = f"{count_df.loc[i, col]}+"  # append '+' in count table
+
                 finally:
                     continue
 
     return count_df
 
 
-def run(access_key, secret_key, s3_buck):
+def custom_agg(x):
+    if len(x) >= 5:
+        try:
+            slope, _, _, _, _ = linregress(pd.to_numeric(x.index.values), x.values)
+            return slope
+        except:
+            return np.nan
+    else:
+        return np.nan
+
+
+def run(s3_bucket):
     # Connect to the SQLite database
     conn = sqlite3.connect('callsigns.db')
-    
+
     # Read data from the SQLite table `callsigns` into a pandas DataFrame
     query = """
     SELECT zone, band, snr, timestamp, spotter
     FROM callsigns
     """
-    
+
     try:
         df = pd.read_sql_query(query, conn)
+        num_records = len(df)  # Count the number of rows in the DataFrame
+        print(f"Number of records read from the database: {num_records}")
     except Exception as e:
         print(f"Error: Unable to read data from the SQLite database. {e}")
         return
     finally:
         conn.close()  # Close the database connection after reading the data
 
+    # Convert 'timestamp' column to integer if necessary
+    df['timestamp'] = pd.to_numeric(df['timestamp'], downcast='integer')
+
     spotter = df['spotter'].iloc[0]
-    df = delete_old(df, span)  # ignore any data older than range from the database.
 
-    count_table = df.pivot_table(values='snr', index=['zone'], columns=['band'], aggfunc='count')  # pivot based on Zones and Bands with snr being the value.
-    count_table = count_table.fillna(0)
-    count_table = count_table.astype(int)
-    count_table = reformat_table(count_table)
+    # 1. Count Table (Number of SNR records per zone and band)
+    count_table = df.pivot_table(values='snr', index=['zone'], columns=['band'], aggfunc='count')
+    count_table = count_table.fillna(0)  # Fill missing values with 0
+    count_table = count_table.astype(int)  # Convert to integers since it's a count
+    count_table = reformat_table(count_table)  # Reformat the table as needed
 
-    mean_table = df.pivot_table(values='snr', index=['zone'], columns=['band'], aggfunc='mean')  # turn dataframe into pivot table.
-    mean_table = reformat_table(mean_table)
+    # 2. Mean Table (Average SNR per zone and band)
+    mean_table = df.pivot_table(values='snr', index=['zone'], columns=['band'], aggfunc='mean')
+    mean_table = reformat_table(mean_table)  # Reformat the table as needed
+
+    # 3. Slope Table (Slope of SNR over time per zone and band using custom_agg)
+    slope_table = df.pivot_table(values='snr', index=['zone'], columns=['band'], aggfunc=custom_agg)
+    slope_table = slope_table.fillna(0)  # Optionally fill missing values
+    slope_table = reformat_table(slope_table)  # Reformat the table as needed
+
+    # count_table = df.pivot_table(values='snr', index=['zone'], columns=['band'], aggfunc='count')  # pivot based on Zones and Bands with snr being the value.
+    # count_table = count_table.fillna(0)
+    # count_table = count_table.astype(int)
+    # count_table = reformat_table(count_table)
+
+    # mean_table = df.pivot_table(values='snr', index=['zone'], columns=['band'], aggfunc='mean')  # turn dataframe into pivot table.
+    # mean_table = reformat_table(mean_table)
 
     def apply_color(val):  # colors cells based on if the zone/Bands are Hot or Marginal.
         if pd.isna(val):
@@ -261,7 +327,7 @@ def run(access_key, secret_key, s3_buck):
     count_table[' '] = mean_table[' ']
 
     now = dt.datetime.now(dt.timezone.utc).strftime("%b %d, %Y %H:%M")
-    caption_string = "Realtime Spots - " + spotter + " - " + now + " GMT"  # table caption
+    caption_string = "Last 15-min data - " + spotter + " - " + now + " GMT"  # table caption
 
     # apply the styles to the dataframes.
     styled_table1 = count_table.style.apply(lambda x: color_table1, axis=None).set_caption(caption_string)
@@ -277,7 +343,8 @@ def run(access_key, secret_key, s3_buck):
                    ('top', '0'), ('background-color', 'rgba(255, 255, 255, 0.75)'), ('z-index', '1')]},
         {'selector': 'td:first-child', 'props': [('font-size', '12pt')]},  # First column
         {'selector': 'td',
-         'props': [('font-size', '10pt'), ('padding-left', 'calc(5px + 1vw)'), ('padding-top', '4px'), ('padding-bottom', '4px'), ('padding-right', 'calc(5px + 1vw)')]}
+         'props': [('font-size', '10pt'), ('padding-left', 'calc(5px + 1vw)'), ('padding-top', '4px'),
+                   ('padding-bottom', '4px'), ('padding-right', 'calc(5px + 1vw)')]}
     ])
 
     # convert the styled table to HTML.
@@ -310,15 +377,15 @@ def run(access_key, secret_key, s3_buck):
          </div>
          <div style="display: flex; justify-content: space-around;">
              <div style="display: flex; align-items: center; margin-right: 20px; font-size: 12pt;">
-                 <div style="font-size: 20px; margin-right: 5px;">◻</div>
+                 <div style="font-size: 20px; margin-right: 5px;">\u25CB</div>
                  <div>Quiet (≤ {sparse} spots)</div>
              </div>
              <div style="display: flex; align-items: center; margin-right: 20px; font-size: 12pt;">
-                 <div style="font-size: 20px; margin-right: 5px;">◩</div>
+                 <div style="font-size: 20px; margin-right: 5px;">\u25d1</div>
                  <div>Moderate ({sparse + 1} to {busy - 1} spots)</div>
              </div>
              <div style="display: flex; align-items: center; font-size: 12pt;">
-                 <div style="font-size: 20px; margin-right: 5px;">◼</div>
+                 <div style="font-size: 20px; margin-right: 5px;">\u25cf</div>
                  <div>Busy (≥ {busy} spots)</div>
              </div>
          </div>
@@ -330,7 +397,7 @@ def run(access_key, secret_key, s3_buck):
     xml_data = solar_response.content
     root = ET.fromstring(xml_data)
 
-   # Extract solar and band condition data
+    # Extract solar and band condition data
     solar_data = {
         "SFI": root.findtext("solardata/solarflux"),
         "Sunspots": root.findtext("solardata/sunspots"),
@@ -356,7 +423,9 @@ def run(access_key, secret_key, s3_buck):
         if band_name in conditions:
             conditions[band_name][time.capitalize()] = condition
 
-    # HTML content
+    bedrock_data = retrieve_bedrock_json(s3_bucket)
+
+    # Updated HTML content with modified CSS for right-aligned tooltips
     solar_table_html = f"""
     <div style="width: 100%; text-align: center; font-weight: bold; margin-bottom: 5px;">Solar Data by N0NBH</div>
     <hr>
@@ -368,91 +437,137 @@ def run(access_key, secret_key, s3_buck):
             <span style="font-weight: bold;">SSN:</span> <span style="font-weight: bold;">{solar_data['Sunspots']}</span>
         </div>
     </div>
-<div style="display: inline-flex; justify-content: center; align-items: center; width: 100%; text-align: center; white-space: nowrap;">
-    <div style="margin-right: 10px;">
-        <span style="font-weight: bold;">A:</span> <span style="font-weight: bold;">{solar_data['A-Index']}</span>
+    <div style="display: inline-flex; justify-content: center; align-items: center; width: 100%; text-align: center; white-space: nowrap;">
+        <div style="margin-right: 10px;">
+            <span style="font-weight: bold;">A:</span> <span style="font-weight: bold;">{solar_data['A-Index']}</span>
+        </div>
+        <div style="margin-right: 10px;">
+            <span style="font-weight: bold;">K:</span> <span style="font-weight: bold;">{solar_data['K-Index']}</span>
+        </div>
+        <div>
+            <span style="font-weight: bold;">X:</span> <span style="font-weight: bold;">{solar_data['X-Ray']}</span>
+        </div>
     </div>
-    <div style="margin-right: 10px;">
-        <span style="font-weight: bold;">K:</span> <span style="font-weight: bold;">{solar_data['K-Index']}</span>
-    </div>
-    <div>
-        <span style="font-weight: bold;">X:</span> <span style="font-weight: bold;">{solar_data['X-Ray']}</span>
-    </div>
-</div>
 
-<div style="display: flex; justify-content: center; align-items: center; white-space: nowrap;">
-    <div style="margin-right: 20px;">
-        <span style="font-weight: bold;">Aurora:</span> <span style="font-weight: bold;">{solar_data['Aurora']}</span>
+    <div style="display: flex; justify-content: center; align-items: center; white-space: nowrap;">
+        <div style="margin-right: 20px;">
+            <span style="font-weight: bold;">Aurora:</span> <span style="font-weight: bold;">{solar_data['Aurora']}</span>
+        </div>
+        <div>
+            <span style="font-weight: bold;">Lat.:</span> <span style="font-weight: bold;">{solar_data['Lat.']}</span>
+        </div>
     </div>
-    <div>
-        <span style="font-weight: bold;">Lat.:</span> <span style="font-weight: bold;">{solar_data['Lat.']}</span>
-    </div>
-</div>
 
     <hr>
-    <div style="width: 100%; text-align: center; font-weight: bold; margin-top: 10px;">Band Conditions</div>
-    <table style="width: 60%; margin: 0 auto; border-collapse: collapse;">
-        <thead>
-            <tr>
-                <th style="padding: 5px; text-align: center; font-weight: bold;">Band</th>
-                <th style="padding: 5px; text-align: center; font-weight: bold;">Day</th>
-                <th style="padding: 5px; text-align: center; font-weight: bold;">Night</th>
-            </tr>
-        </thead>
+    <div style="width: 100%; text-align: center; font-weight: bold; margin-top: 10px; margin-bottom: 10px">Band Conditions</div>
+    <table style="width: 60%; margin: 0 auto; border-collapse: collapse; font-size: 15px;">
         <tbody>
     """
+    summary = bedrock_data["Summary"]
+    # Generate table rows with CSS tooltips
+    for band, data in bedrock_data.items():
+        if isinstance(data, dict) and "Rating" in data and "Explanation" in data:
+            rating = data["Rating"]
+            explanation = data["Explanation"]
+            if band == "Low_Bands":
+                band = "Low Bands (160 & 80)"
+            elif band == "Medium_Bands":
+                band = "Medium Bands (40 & 30)"
+            elif band == "Upper_Bands":
+                band = "Upper Bands (20, 17 & 15)"
+            elif band == "High_Bands":
+                band = "High Bands (12 & 10)"
+            else:
+                band = "Magic Band (6)"
 
- # add the conditions for each band with color coding.
-    for band, condition in conditions.items():
-        day_condition = condition.get("Day", "N/A")
-        night_condition = condition.get("Night", "N/A")
-        if day_condition == "Good":
-            day_color = "green"
-        elif day_condition == "Fair":
-            day_color = "orange"
-        else:
-            day_color = "red"
-        if night_condition == "Good":
-            night_color = "green"
-        elif night_condition == "Fair":
-            night_color = "orange"
-        else:
-            night_color = "red"
+            # Determine color based on rating
+            if rating == "Excellent":
+                color = "green"
+            elif rating == "Good":
+                color = "blue"
+            elif rating == "Fair":
+                color = "orange"
+            else:
+                color = "red"
 
-        solar_table_html += f"""
-        <tr>
-            <td style="padding: 5px; text-align: center; font-weight: bold; white-space: nowrap;">{band}</td>
-            <td style="padding: 5px; text-align: center; font-weight: bold; color: {day_color}; white-space: nowrap;">{day_condition}</td>
-            <td style="padding: 5px; text-align: center; font-weight: bold; color: {night_color}; white-space: nowrap;">{night_condition}</td>
-        </tr>
-        """
+            # Add row with a CSS-styled tooltip for the explanation
+            solar_table_html += f"""
+                <tr>
+                    <td style="padding: 5px; text-align: center; font-weight: bold; white-space: nowrap;">{band}</td>
+                    <td style="padding: 5px; text-align: center; font-weight: bold; color: {color}; position: relative;">
+                        <span class="tooltip">{rating}
+                            <span class="tooltiptext">{explanation}</span>
+                        </span>
+                    </td>
+                </tr>
+                """
+        else:
+            # Skip items that don't contain the required fields
+            continue
 
     solar_table_html += """
         </tbody>
     </table>
-    <div style="margin-top: 5px; text-align: center">
-        <span style="font-weight: bold;">Signal Noise:</span> <span style="font-weight: bold;">{Signal_Noise}</span>
-    </div>
+
+    <style>
+    /* CSS for tooltip */
+    .tooltip {
+        position: relative;
+        display: inline-block;
+        cursor: pointer;
+    }
+
+    .tooltip .tooltiptext {
+        visibility: hidden;
+        width: 450px;
+        background-color: #333;
+        color: #fff;
+        text-align: left;
+        border-radius: 5px;
+        padding: 8px;
+        position: absolute;
+        z-index: 1;
+        left: 111%; /* Position to the right */
+        top: 50%;
+        transform: translateY(-50%);
+        opacity: 0;
+        transition: opacity 0.3s, transform 0.3s;
+        white-space: normal;
+        font-size: 12px;
+    }
+
+    /* Tooltip arrow pointing to the left */
+    .tooltip .tooltiptext::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        right: 100%;
+        margin-top: -5px;
+        border-width: 5px;
+        border-style: solid;
+        border-color: transparent #333 transparent transparent;
+    }
+
+    .tooltip:hover .tooltiptext {
+        visibility: visible;
+        opacity: 1;
+    }
+    </style>
     """
 
-    # Formatting the placeholders directly in `solar_table_html`
-    solar_table_html = solar_table_html.format(
-        SFI=solar_data['SFI'],
-        Sunspots=solar_data['Sunspots'],
-        A_Index=solar_data['A-Index'],
-        K_Index=solar_data['K-Index'],
-        X_Ray=solar_data['X-Ray'],
-        Signal_Noise=solar_data['Signal_Noise'],
-        Aurora=solar_data['Aurora'],
-        Lat=solar_data['Lat.']
-    )
+    # Add the Summary text after the table
+    solar_table_html += f"""
+        <div style="width: 300px; margin: 10px auto; text-align: left; font-size: 12px; color: #333;">
+            {summary}
+        </div>
+        """
 
-    # wrap the table in a fixed div.
+    # Wrap the entire content in a fixed div for positioning
     solar_table_html = f"""
-    <div style="position: fixed; left: 5%; padding-top: 0.75%; padding: 10px; z-index: 1000; font-family: 'Roboto', monospace;">
-        {solar_table_html}
-    </div>
-    """
+        <div style="position: fixed; left: 2%; padding-top: 0.75%; padding: 10px; z-index: 1000; font-family: 'Roboto', monospace;">
+            {solar_table_html}
+        </div>
+        """
 
     final_html = f"""
     <style>
@@ -469,29 +584,6 @@ def run(access_key, secret_key, s3_buck):
         {solar_table_html}
         <div style="position: relative; flex-grow: 1; padding-left: 160px; overflow-y: auto; font-family: 'Roboto', monospace;">
             <div style="max-height: 80vh; overflow-y: auto; padding-top: 0.75%; padding-bottom: 10%;">
-                <!-- Add your main table content here (html1) -->
-            </div>
-        </div>
-    </div>
-    """
-
-
-       # Final HTML block with solar table, main table, and legend html blocks all together.
-    final_html = f"""
-    <style>
-        body {{
-            margin: 0;
-            padding: 0;
-            overflow-y: hidden; /* Prevent vertical scrolling */
-        }}
-        html {{
-            height: 100%;
-        }}
-    </style>
-    <div style="display: flex; width: 100%; height: 100%;">
-        {solar_table_html}
-        <div style="position: relative; flex-grow: 1; padding-left: 120px; overflow-y: auto; font-family: 'Roboto', monospace;"> <!-- Added padding to accommodate the table -->
-            <div style="max-height: 80vh; overflow-y: auto; padding-top: 0.75%; padding-bottom: 10%;"> <!-- This div creates the scrollable area -->
                 {html1}
             </div>
             <div>{legend_html}</div>
@@ -507,17 +599,15 @@ def run(access_key, secret_key, s3_buck):
         text_file.write(minified_html)
 
     print("Table updated in index.html at " + now)
-    
-    upload_file_to_s3("index.html", s3_buck, access_key, secret_key)  # upload index.html to S3 bucket
+
+    upload_file_to_s3("index.html", s3_bucket)  # upload index.html to S3 bucket
+
 
 
 if __name__ == '__main__':
     time_to_wait = frequency * 60  # time to wait in between re-running program
-    credentials = get_aws_credentials()
-    aws_access_key = credentials['aws_access_key_id']
-    secret_access_key = credentials['aws_secret_access_key']
-    s3_bucket = credentials['s3_bucket']
+    s3_bucket = input("Enter the name of the S3 Bucket you'd like to write to: ")
 
     while True:  # run program every 'n' minutes, which will re-analyze data and upload a new index.html to the S3 bucket.
-        run(aws_access_key, secret_access_key, s3_bucket)
+        run(s3_bucket)
         time.sleep(time_to_wait)

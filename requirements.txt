@@ -3,3 +3,6 @@ boto3
 jinja2
 requests
 htmlmin
+anthropic
+astral
+scipy

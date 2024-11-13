@@ -1,8 +1,12 @@
 For full functionality, run "pip install -r requirements.txt" in project directory. 
 
+Please run "aws configure" in terminal to specify AWS Credentials!!!!
+
 Run processData.py in terminal: python3 processData.py 
 
 Run analyzeData.py in terminal: python3 analyzeData.py 
+
+Run bedrockAnalysis.py in terminal: python3 bedrockAnalysis.py
 
 Add "-h" to command to view arguments that can be set
 

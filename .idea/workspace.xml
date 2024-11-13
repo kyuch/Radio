@@ -4,11 +4,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="28dd482c-a93d-49e3-b0e6-09d9777c16ac" name="Changes" comment="added line to delete_old in analyzeData.py that removes all rows where string value is in Timestamp. added more checks in processData.py to ensure that values exist">
+    <list default="true" id="28dd482c-a93d-49e3-b0e6-09d9777c16ac" name="Changes" comment="large changes -- no longer using csv files, now using SQLite databases. processData.py now attempts to reconnect to server if lost connection. analyzeData.py now &quot;minifies&quot; html file for convenience.">
+      <change beforePath="$PROJECT_DIR$/.idea/csv-editor.xml" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/analyzeData.py" beforeDir="false" afterPath="$PROJECT_DIR$/analyzeData.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/callsigns.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/callsigns.db" beforeDir="false" afterPath="$PROJECT_DIR$/callsigns.db" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/index.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/processData.py" beforeDir="false" afterPath="$PROJECT_DIR$/processData.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
@@ -50,22 +51,25 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;Python.analyzeData.executor&quot;: &quot;Run&quot;,
-    &quot;Python.main.executor&quot;: &quot;Run&quot;,
-    &quot;Python.processData.executor&quot;: &quot;Run&quot;,
-    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Python.10-17-prod-AnalyzeData.executor": "Run",
+    "Python.analyzeData.executor": "Run",
+    "Python.bedrockAnalysis.executor": "Run",
+    "Python.main.executor": "Run",
+    "Python.processData.executor": "Run",
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "git-widget-placeholder": "main"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$" />
+      <recent name="$PROJECT_DIR$/.venv" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.analyzeData">
+  <component name="RunManager">
     <configuration name="analyzeData" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="Radio" />
       <option name="ENV_FILES" value="" />
@@ -488,7 +492,15 @@
       <option name="project" value="LOCAL" />
       <updated>1728064628874</updated>
     </task>
-    <option name="localTasksCounter" value="45" />
+    <task id="LOCAL-00045" summary="large changes -- no longer using csv files, now using SQLite databases. processData.py now attempts to reconnect to server if lost connection. analyzeData.py now &quot;minifies&quot; html file for convenience.">
+      <option name="closed" value="true" />
+      <created>1729029530903</created>
+      <option name="number" value="00045" />
+      <option name="presentableId" value="LOCAL-00045" />
+      <option name="project" value="LOCAL" />
+      <updated>1729029530903</updated>
+    </task>
+    <option name="localTasksCounter" value="46" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -503,7 +515,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="csv to dataframe in analyzeData.py" />
     <MESSAGE value="analyzeData.py now creates a pivot table for the data in the csv that can be viewed in index.html" />
     <MESSAGE value="added arguments + argument parser to processData.py. Run program by entering &quot;python3 processData.py&quot; in command line, with &quot;-h&quot; to see the arguments. Also made it so that it only tracks one spotter at a time." />
     <MESSAGE value="added ft4 to stream. changed pivot table styling and formatting. made pivot table display count of data points rather than average, but heatmap is based off average." />
@@ -528,6 +539,7 @@
     <MESSAGE value="removed CW spots from avg calculations (kept the + stuff)" />
     <MESSAGE value="removed CW spots, changed regex and removed login call -- need to bugfix on test branch. Created requirements.txt" />
     <MESSAGE value="added line to delete_old in analyzeData.py that removes all rows where string value is in Timestamp. added more checks in processData.py to ensure that values exist" />
-    <option name="LAST_COMMIT_MESSAGE" value="added line to delete_old in analyzeData.py that removes all rows where string value is in Timestamp. added more checks in processData.py to ensure that values exist" />
+    <MESSAGE value="large changes -- no longer using csv files, now using SQLite databases. processData.py now attempts to reconnect to server if lost connection. analyzeData.py now &quot;minifies&quot; html file for convenience." />
+    <option name="LAST_COMMIT_MESSAGE" value="large changes -- no longer using csv files, now using SQLite databases. processData.py now attempts to reconnect to server if lost connection. analyzeData.py now &quot;minifies&quot; html file for convenience." />
   </component>
 </project>
