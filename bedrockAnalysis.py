@@ -205,7 +205,7 @@ def run(s3_bucket):
         "Electron Flux": root.findtext("solardata/electonflux"),
         "Normalization": root.findtext("solardata/normalization"),
         "Solar Wind": root.findtext("solardata/solarwind"),
-        "Magnetic Field": root.findtext("solardata/magneticfield"),
+        "Bz": root.findtext("solardata/magneticfield"),
         "Date and Time": (now + " UTC"),
         "Latitude": loc_rise_set.get('latitude'),
         "Longitude": loc_rise_set.get('longitude'),
